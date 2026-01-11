@@ -11,6 +11,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/scripts/**/*", "utils/**/*"],
+  "include": ["src/scripts/**/*", "scripts/**/*", "utils/**/*"],
   "exclude": ["node_modules"]
 }
