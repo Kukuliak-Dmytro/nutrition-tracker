@@ -2,8 +2,11 @@ import { Plus, PackagePlus, ChefHat } from "lucide-react";
 import { IngredientCreateForm } from "@/components/forms/IngredientCreateForm";
 import { RecipeCreateForm } from "@/components/forms/RecipeCreateForm";
 import { IngredientSearchModal } from "@/components/forms/IngredientSearchModal";
+import { useTranslations } from 'next-intl';
 
 export default function QuickActions() {
+   const t = useTranslations('dashboard');
+   
    return (
       <section
          className="w-full border border-gray-200/80 rounded-xl flex flex-col items-center justify-center shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950"
@@ -12,7 +15,7 @@ export default function QuickActions() {
             <h2
                id="quick-actions-title"
                className="text-xl sm:text-2xl md:text-3xl font-semibold text-center sm:text-left">
-               Quick Actions
+               {t('quickActions')}
             </h2>
          </span>
          <div className="flex flex-col sm:flex-row justify-between w-full px-8 pb-8 pt-4 gap-6">
@@ -23,10 +26,10 @@ export default function QuickActions() {
                   </div>
                   <div className="flex flex-col w-full gap-0.5 sm:gap-1">
                      <p className="font-semibold text-sm sm:text-lg">
-                        Create Recipe
+                        {t('createRecipe')}
                      </p>
                      <p className="text-sm font-light opacity-90">
-                        Build new dish
+                        {t('buildNewDish')}
                      </p>
                   </div>
                </button>
@@ -39,10 +42,10 @@ export default function QuickActions() {
                   </div>
                   <div className="flex flex-col w-full gap-0.5 sm:gap-1">
                      <p className="font-semibold text-sm sm:text-lg">
-                      Create Ingredient
+                      {t('createIngredient')}
                      </p>
                      <p className="text-sm font-light opacity-90">
-                        Create new ingredient
+                        {t('createNewIngredient')}
                      </p>
                   </div>
                </button>
@@ -54,10 +57,10 @@ export default function QuickActions() {
                   </div>
                   <div className="flex flex-col w-full gap-0.5 sm:gap-1">
                      <p className="font-semibold text-sm sm:text-lg">
-                        Search by Ingredients
+                        {t('searchByIngredients')}
                      </p>
                      <p className="text-base sm:text-sm font-light opacity-90">
-                        Find recipes
+                        {t('findRecipes')}
                      </p>
                   </div>
                </button>

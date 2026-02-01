@@ -11,6 +11,7 @@ import { useDeleteRecipe } from "@/app/hooks/useRecipes";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RecipeResponse } from "../../../utils/schemas";
+import { useTranslations } from 'next-intl';
 
 export default function RecipeDelete({
   children,
@@ -19,6 +20,9 @@ export default function RecipeDelete({
   children: React.ReactNode;
   recipe: RecipeResponse;
 }) {
+  const t = useTranslations('forms');
+  const tToast = useTranslations('toast');
+  const tCommon = useTranslations('common');
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { mutate: deleteRecipe } = useDeleteRecipe();
@@ -27,12 +31,12 @@ export default function RecipeDelete({
     setIsDeleting(true);
     deleteRecipe(recipe.id!, {
       onSuccess: () => {
-        toast.success("Recipe deleted successfully");
+        toast.success(tToast('recipeDeleted'));
         setIsOpen(false);
         setIsDeleting(false);
       },
       onError: () => {
-        toast.error("Failed to delete recipe");
+        toast.error(tToast('recipeDeleteFailed'));
         setIsDeleting(false);
       },
     });
@@ -44,18 +48,10 @@ export default function RecipeDelete({
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
           <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            Delete Recipe
+            {t('deleteRecipe')}
           </DialogTitle>
           <DialogDescription className="text-gray-600 dark:text-gray-400 mt-2">
-            Are you sure you want to delete{" "}
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              &quot;{recipe.name}&quot;
-            </span>
-            ?
-            <br />
-            <span className="text-sm text-red-600 dark:text-red-400 mt-1 block">
-              This action cannot be undone.
-            </span>
+            {t('deleteRecipeConfirmation', { name: recipe.name })}
           </DialogDescription>
         </DialogHeader>
 
@@ -67,7 +63,7 @@ export default function RecipeDelete({
             disabled={isDeleting}
             className="flex-1 sm:flex-none"
           >
-            Cancel
+            {tCommon('cancel')}
           </Button>
           <Button
             type="button"
@@ -79,10 +75,10 @@ export default function RecipeDelete({
             {isDeleting ? (
               <>
                 <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Deleting...
+                {t('deleting')}
               </>
             ) : (
-              <>Delete Recipe</>
+              <>{t('delete')}</>
             )}
           </Button>
         </div>

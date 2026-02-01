@@ -8,13 +8,14 @@ import {
    ArrowRightIcon,
    Eye,
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from '@/i18n/routing';
 import RecipeDetailsCard from "@/components/cards/RecipeDetailsCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDashboard } from "@/app/hooks/useDashboard";
 import { Button } from "../ui/button";
 import type { RecipeResponse } from "../../../utils/schemas/recipe";
 import { format } from "date-fns";
+import { useTranslations } from 'next-intl';
 
 export default function CookingHistory() {
    const {
@@ -22,23 +23,24 @@ export default function CookingHistory() {
       isLoading,
       isError,
    } = useDashboard();
+   const t = useTranslations('dashboard');
    const recentCookingHistory = dashboardData?.recentCookingHistory || [];
 
    if (isLoading) {
       return (
          <section className="w-full flex flex-col bg-muted/30 py-8 px-8 border border-border/50  rounded-xl shadow-md">
             <div className="flex w-full pb-6 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Recent Cooking History</h2>
+               <h2 className="text-3xl font-semibold">{t('recentCookingHistory')}</h2>
                <Link
                   href="/cooking-history"
                   className="flex items-center gap-2 text-sm text-primary font-semibold hover:text-primary/80 transition-colors">
-                  View All <ArrowRightIcon size={16} />
+                  {t('viewAll')} <ArrowRightIcon size={16} />
                </Link>
             </div>
             <div className="flex flex-col items-center gap-4 py-20">
                <Loader2 className="w-12 h-12 animate-spin text-primary" />
                <p className="text-base text-muted-foreground">
-                  Loading cooking history...
+                  {t('loadingCookingHistory')}
                </p>
             </div>
          </section>
@@ -49,16 +51,16 @@ export default function CookingHistory() {
       return (
          <section className="w-full flex flex-col bg-muted/30 py-8 px-8 border border-border/50  rounded-xl shadow-md">
             <div className="flex w-full pb-6 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Recent Cooking History</h2>
+               <h2 className="text-3xl font-semibold">{t('recentCookingHistory')}</h2>
                <Link
                   href="/cooking-history"
                   className="flex items-center gap-2 text-sm text-primary font-semibold hover:text-primary/80 transition-colors">
-                  View All <ArrowRightIcon size={16} />
+                  {t('viewAll')} <ArrowRightIcon size={16} />
                </Link>
             </div>
             <div className="flex flex-col items-center gap-4 py-20">
                <p className="text-base text-red-500">
-                  Error loading cooking history
+                  {t('errorLoadingCookingHistory')}
                </p>
             </div>
          </section>
@@ -69,11 +71,11 @@ export default function CookingHistory() {
       return (
          <section className="w-full flex flex-col bg-muted/30 py-8 px-8 border border-border/50  rounded-xl shadow-md">
             <div className="flex w-full pb-6 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Recent Cooking History</h2>
+               <h2 className="text-3xl font-semibold">{t('recentCookingHistory')}</h2>
                <Link
                   href="/cooking-history"
                   className="flex items-center gap-2 text-sm text-primary font-semibold hover:text-primary/80 transition-colors">
-                  View All <ArrowRightIcon size={16} />
+                  {t('viewAll')} <ArrowRightIcon size={16} />
                </Link>
             </div>
             <div className="flex flex-col items-center gap-3 py-20">
@@ -81,7 +83,7 @@ export default function CookingHistory() {
                   <ChefHat size={64} />
                </div>
                <p className="text-muted-foreground text-base">
-                  No cooking history yet. Cook something to get started!
+                  {t('noCookingHistoryYet')}
                </p>
             </div>
          </section>
@@ -91,11 +93,11 @@ export default function CookingHistory() {
    return (
       <section className="w-full flex flex-col bg-muted/30 py-8 px-8 border border-border/50  rounded-xl shadow-md">
          <div className="flex w-full pb-6 justify-between items-center">
-            <h2 className="text-3xl font-semibold">Recent Cooking History</h2>
+            <h2 className="text-3xl font-semibold">{t('recentCookingHistory')}</h2>
             <Link
                href="/cooking-history"
                className="flex items-center gap-2 text-sm text-primary font-semibold hover:text-primary/80 transition-colors">
-               View All <ArrowRightIcon size={16} />
+               {t('viewAll')} <ArrowRightIcon size={16} />
             </Link>
          </div>
 
@@ -133,7 +135,7 @@ export default function CookingHistory() {
                         </div>
                         <div className="flex items-center gap-1">
                            <Utensils className="h-3 w-3" />
-                           <span>{history.recipe.servings} servings</span>
+                           <span>{history.recipe.servings} {t('servings', { ns: 'recipes' })}</span>
                         </div>
                      </div>
 

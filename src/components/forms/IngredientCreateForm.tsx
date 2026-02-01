@@ -16,8 +16,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from 'next-intl';
 
 export function IngredientCreateForm({ children }: { children: React.ReactNode }) {
+    const t = useTranslations('ingredients');
+    const tToast = useTranslations('toast');
+    const tCommon = useTranslations('common');
     const [open, setOpen] = useState(false);
     const { mutate: createIngredient } = useCreateIngredient();
     const queryClient = useQueryClient();
@@ -43,7 +47,7 @@ export function IngredientCreateForm({ children }: { children: React.ReactNode }
     createIngredient(data, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["ingredients"] });
-        toast.success(`Ingredient ${data.name} created successfully!`);
+        toast.success(tToast('ingredientCreated', { name: data.name }));
         setOpen(false);
       },
     });
@@ -54,10 +58,10 @@ export function IngredientCreateForm({ children }: { children: React.ReactNode }
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Ingredient</DialogTitle>
+          <DialogTitle>{t('addIngredient')}</DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          Add a new ingredient to your database.
+          {t('createNewDescription')}
         </DialogDescription>
         <form 
           onSubmit={(e) => {
@@ -68,58 +72,62 @@ export function IngredientCreateForm({ children }: { children: React.ReactNode }
           className="flex flex-col gap-4"
         >
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input type="text" id="name" {...register("name")} placeholder="Enter ingredient name" />
+            <Label htmlFor="name">{t('name')}</Label>
+            <Input type="text" id="name" {...register("name")} placeholder={t('namePlaceholder')} />
             {errors.name && <p className="text-red-500">{errors.name.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="category">Category</Label>
-            <Input id="category" {...register("category")} placeholder="Enter ingredient category (optional)" />
+            <Label htmlFor="category">{t('category')}</Label>
+            <Input id="category" {...register("category")} placeholder={t('categoryPlaceholder')} />
             {errors.category && <p className="text-red-500">{errors.category.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="caloriesPer100g">Calories per 100g</Label>
+            <Label htmlFor="caloriesPer100g">{t('caloriesPer100g')}</Label>
             <Input
               type="number"
               step="0.10"
               id="caloriesPer100g"
               {...register("caloriesPer100g")}
+              placeholder={t('caloriesPlaceholder')}
             />
             {errors.caloriesPer100g && <p className="text-red-500">{errors.caloriesPer100g.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="proteinPer100g">Protein per 100g</Label>
+            <Label htmlFor="proteinPer100g">{t('proteinPer100g')}</Label>
             <Input
               type="number"
               step="0.10"
               id="proteinPer100g"
               {...register("proteinPer100g")}
+              placeholder={t('proteinPlaceholder')}
             />
             {errors.proteinPer100g && <p className="text-red-500">{errors.proteinPer100g.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="carbsPer100g">Carbs per 100g</Label>
+            <Label htmlFor="carbsPer100g">{t('carbsPer100g')}</Label>
             <Input
               type="number"
               step="0.10"
               id="carbsPer100g"
               {...register("carbsPer100g")}
+              placeholder={t('carbsPlaceholder')}
             />
             {errors.carbsPer100g && <p className="text-red-500">{errors.carbsPer100g.message}</p>}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="fatPer100g">Fat per 100g</Label>
+            <Label htmlFor="fatPer100g">{t('fatPer100g')}</Label>
             <Input
               type="number"
               step="0.10"
               id="fatPer100g"
               {...register("fatPer100g")}
+              placeholder={t('fatPlaceholder')}
             />
             {errors.fatPer100g && <p className="text-red-500">{errors.fatPer100g.message}</p>}
           </div>
           <div className="flex justify-start gap-2 mt-4">
-            <Button type="submit">Save Ingredient</Button>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit">{t('createIngredient')}</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>{tCommon('cancel')}</Button>
           </div>
         </form>
       </DialogContent>

@@ -45,8 +45,11 @@ import {
 } from "lucide-react";
 import { IngredientCreateForm } from "./IngredientCreateForm";
 import { getIngredient } from "@/app/services/ingredients";
+import { useTranslations } from 'next-intl';
 
 export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
+   const t = useTranslations('recipes');
+   const tToast = useTranslations('toast');
    const [isOpen, setIsOpen] = useState(false);
    const [openIngredientIndex, setOpenIngredientIndex] = useState<
       number | null
@@ -110,11 +113,11 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
       createRecipe(data, {
          onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["recipes"] });
-            toast.success("Recipe created successfully");
+            toast.success(tToast('recipeCreated'));
             setIsOpen(false);
          },
          onError: () => {
-            toast.error(`Failed to create recipe ${data.name}`);
+            toast.error(tToast('recipeCreateFailed', { name: data.name }));
             setIsOpen(false);
          },
       });
@@ -216,28 +219,28 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
          <DialogTrigger asChild>{children}</DialogTrigger>
          <DialogContent className="max-w-5xl sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-               <DialogTitle>Create a new recipe</DialogTitle>
+               <DialogTitle>{t('createNew')}</DialogTitle>
                <DialogDescription>
-                  Create a new recipe to your database.
+                  {t('createNewDescription')}
                </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                <div className="space-y-4">
                   <div className="border-b pb-2">
                      <h3 className="text-lg font-semibold">
-                        Basic Information
+                        {t('basicInformation')}
                      </h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="space-y-2">
                         <Label htmlFor="name" className="text-sm font-medium">
-                           Recipe Name *
+                           {t('recipeName')} *
                         </Label>
                         <Input
                            type="text"
                            id="name"
                            {...register("name")}
-                           placeholder="Enter recipe name"
+                           placeholder={t('recipeNamePlaceholder')}
                            className="w-full"
                         />
                         {errors.name && (
@@ -250,13 +253,13 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                         <Label
                            htmlFor="servings"
                            className="text-sm font-medium">
-                           Servings *
+                           {t('servings')} *
                         </Label>
                         <Input
                            type="number"
                            id="servings"
                            {...register("servings")}
-                           placeholder="Number of servings"
+                           placeholder={t('servingsPlaceholder')}
                            className="w-full"
                         />
                         {errors.servings && (
@@ -270,20 +273,20 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
 
                <div className="space-y-4">
                   <div className="border-b pb-2">
-                     <h3 className="text-lg font-semibold">Recipe Details</h3>
+                     <h3 className="text-lg font-semibold">{t('recipeDetails')}</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="space-y-2">
                         <Label
                            htmlFor="cookingTime"
                            className="text-sm font-medium">
-                           Cooking Time
+                           {t('cookingTime')}
                         </Label>
                         <Input
                            type="text"
                            id="cookingTime"
                            {...register("cookingTime")}
-                           placeholder="e.g., 30 minutes"
+                           placeholder={t('cookingTimePlaceholder')}
                            className="w-full"
                         />
                         {errors.cookingTime && (
@@ -294,13 +297,13 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                      </div>
                      <div className="space-y-2">
                         <Label htmlFor="rating" className="text-sm font-medium">
-                           Rating
+                           {t('rating')}
                         </Label>
                         <Input
                            type="number"
                            id="rating"
                            {...register("rating")}
-                           placeholder="1-100"
+                           placeholder={t('ratingPlaceholder')}
                            min="1"
                            max="100"
                            className="w-full"
@@ -316,7 +319,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                <div className="space-y-4">
                   <div className="border-b pb-2">
                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">Ingredients</h3>
+                        <h3 className="text-lg font-semibold">{t('ingredients')}</h3>
                         <Button
                            type="button"
                            variant="outline"
@@ -326,7 +329,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                            }
                            className="flex items-center gap-2">
                            <PlusIcon className="h-4 w-4" />
-                           Add Ingredient
+                           {t('addIngredient')}
                         </Button>
                      </div>
                   </div>
@@ -350,7 +353,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                               <Label
                                  htmlFor={`ingredients.${index}.ingredientId`}
                                  className="text-sm font-medium text-foreground">
-                                 Ingredient №{index + 1}
+                                 {t('ingredientNumber', { number: index + 1 })}
                               </Label>
                               <Popover
                                  open={openIngredientIndex === index}
@@ -397,10 +400,10 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                                                       watchedIngredients[index]
                                                          ?.ingredientId
                                                 )?.name ||
-                                             "Select ingredient..."
+                                             t('selectIngredient')
                                           ) : (
                                              <span className="text-muted-foreground">
-                                                Select ingredient...
+                                                {t('selectIngredient')}
                                              </span>
                                           )}
                                        </span>
@@ -418,12 +421,12 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                                                    e.target.value
                                                 )
                                              }
-                                             placeholder="Search ingredient by name or category"
+                                             placeholder={t('searchIngredient')}
                                           />
                                           {isFetching && (
                                              <span className="text-muted-foreground flex items-center gap-2 justify-center py-4">
                                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                Searching...
+                                                {t('searching')}
                                              </span>
                                           )}
                                           {!filteredIngredients ||
@@ -431,7 +434,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                                                 0 && (
                                                 <span className="text-muted-foreground flex items-center gap-2 justify-center py-4">
                                                    <Search className="h-4 w-4 mr-2" />
-                                                   No ingredients found
+                                                   {t('noIngredientsFound')}
                                                 </span>
                                              ))}
                                        </div>
@@ -508,7 +511,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                                                 className="flex-1">
                                                 <PlusIcon className="h-4 w-4 mr-2" />
                                                 <span className="text-sm font-medium">
-                                                   Create New
+                                                   {t('createNewIngredient')}
                                                 </span>
                                              </Button>
                                           </IngredientCreateForm>
@@ -522,11 +525,11 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                                                 className="flex-1">
                                                 {isFetchingNextPage
                                                    ? isFetching
-                                                      ? "Searching..."
-                                                      : "Loading..."
+                                                      ? t('searching')
+                                                      : t('loadingMore')
                                                    : isFetching
-                                                   ? "Searching..."
-                                                   : "Load More"}
+                                                   ? t('searching')
+                                                   : t('loadMore')}
                                              </Button>
                                           )}
                                        </div>
@@ -548,7 +551,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                               <Label
                                  htmlFor={`ingredients.${index}.quantityGrams`}
                                  className="text-sm font-medium text-foreground">
-                                 Quantity (g)
+                                 {t('quantity')}
                               </Label>
                               <Input
                                  type="number"
@@ -556,7 +559,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                                  {...register(
                                     `ingredients.${index}.quantityGrams`
                                  )}
-                                 placeholder="0"
+                                 placeholder={t('quantityPlaceholder')}
                                  min={0}
                                  max={1000}
                                  step={1}
@@ -596,21 +599,21 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                      <Label
                         htmlFor="description"
                         className="text-sm font-medium">
-                        Description
+                        {t('description')}
                      </Label>
                      <Button
                         type="button"
                         variant="default"
                         size="sm"
                         onClick={() => onGenerate("description")}>
-                        {isPendingDesc ? "Generating..." : "Generate"}
+                        {isPendingDesc ? t('generating') : t('generate')}
                      </Button>
                   </div>
                   <Textarea
                      rows={3}
                      id="description"
                      {...register("description")}
-                     placeholder="Brief description of the recipe"
+                     placeholder={t('descriptionPlaceholder')}
                      className="w-full"
                   />
                   {errors.description && (
@@ -624,26 +627,25 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                      <Label
                         htmlFor="instructions"
                         className="text-sm font-medium">
-                        Instructions
+                        {t('instructions')}
                      </Label>
                      <Button
                         type="button"
                         variant="default"
                         size="sm"
                         onClick={() => onGenerate("instructions")}>
-                        {isPendingInstr ? "Generating..." : "Generate"}
+                        {isPendingInstr ? t('generating') : t('generate')}
                      </Button>
                   </div>
                   <Textarea
                      rows={6}
                      id="instructions"
                      {...register("instructions")}
-                     placeholder="Step-by-step cooking instructions. Each step on a new line."
+                     placeholder={t('instructionsPlaceholder')}
                      className="w-full"
                   />
                   <p className="text-xs text-muted-foreground">
-                     Tip: Write each step on a separate line for better
-                     formatting
+                     {t('instructionsTip')}
                   </p>
                   {errors.instructions && (
                      <p className="text-sm text-red-500">
@@ -657,13 +659,13 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                      <div className="space-y-4">
                         <div className="border-b pb-2">
                            <h3 className="text-lg font-semibold">
-                              Nutritional Information
+                              {t('nutritionalInformation')}
                            </h3>
                         </div>
                         <div className="space-y-4">
                            <div>
                               <h4 className="text-sm font-medium mb-2">
-                                 Total Recipe
+                                 {t('totalRecipe')}
                               </h4>
                               <NutritionDisplay
                                  nutrition={calculateCurrentNutrition()!}
@@ -673,7 +675,7 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                            </div>
                            <div>
                               <h4 className="text-sm font-medium mb-2">
-                                 Per Serving ({watchedServings} servings)
+                                 {t('perServing', { servings: watchedServings })}
                               </h4>
                               <NutritionDisplay
                                  nutrition={calculateCurrentNutrition()!}
@@ -690,13 +692,13 @@ export function RecipeCreateForm({ children }: { children: React.ReactNode }) {
                      type="button"
                      variant="outline"
                      onClick={() => setIsOpen(false)}>
-                     Cancel
+                     {t('cancel')}
                   </Button>
                   <Button
                      type="submit"
                      disabled={isSubmitting}
                      className="px-8">
-                     {isSubmitting ? "Creating..." : "Create Recipe"}
+                     {isSubmitting ? t('creating') : t('createRecipe')}
                   </Button>
                </div>
             </form>

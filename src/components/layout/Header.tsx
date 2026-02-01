@@ -1,12 +1,15 @@
 'use client';
 import { ChefHat, Menu } from "lucide-react";
 import { ModeToggle } from "./ThemeSwitcher";
-import Link from "next/link";
+import { Link } from '@/i18n/routing';
 import { slide as MenuSlide } from "react-burger-menu";
 import { useState } from "react";
+import { useTranslations } from 'next-intl';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export default function Header() {
    const [isOpen, setIsOpen] = useState(false);
+   const t = useTranslations('navigation');
 
    return (
       <header className="border-b border-border relative">
@@ -18,20 +21,21 @@ export default function Header() {
             <nav className="justify-self-center hidden md:block">
                <ul className="flex items-center gap-8 text-muted-foreground font-semibold">
                   <li className="transition-colors hover:text-primary">
-                     <Link href="/">Dashboard</Link>
+                     <Link href="/">{t('dashboard')}</Link>
                   </li>
                   <li className="transition-colors hover:text-primary">
-                     <Link href="/ingredients">Ingredients</Link>
+                     <Link href="/ingredients">{t('ingredients')}</Link>
                   </li>
                   <li className="transition-colors hover:text-primary">
-                     <Link href="/recipes">Recipes</Link>
+                     <Link href="/recipes">{t('recipes')}</Link>
                   </li>
                   <li className="transition-colors hover:text-primary">
-                     <Link href="/cooking-history">History</Link>
+                     <Link href="/cooking-history">{t('history')}</Link>
                   </li>
                </ul>
             </nav>
-            <div className="absolute right-20 hidden md:block">
+            <div className="absolute right-20 hidden md:flex items-center gap-4">
+               <LanguageSwitcher />
                <ModeToggle />
             </div>
             <button
@@ -53,19 +57,20 @@ export default function Header() {
                disableAutoFocus>
                <ul className="flex items-center gap-8 font-semibold">
                   <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/">Dashboard</Link>
+                     <Link href="/">{t('dashboard')}</Link>
                   </li>
                   <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/ingredients">Ingredients</Link>
+                     <Link href="/ingredients">{t('ingredients')}</Link>
                   </li>
                   <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/recipes">Recipes</Link>
+                     <Link href="/recipes">{t('recipes')}</Link>
                   </li>
                   <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/cooking-history">History</Link>
+                     <Link href="/cooking-history">{t('history')}</Link>
                   </li>
                </ul>
-               <div className="md:hidden">
+               <div className="md:hidden flex flex-col gap-4">
+                  <LanguageSwitcher />
                   <ModeToggle />
                </div>
             </MenuSlide>

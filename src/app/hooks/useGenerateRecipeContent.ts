@@ -3,6 +3,7 @@ import { useGenerateRecipeContent } from "./useRecipes";
 import { useState } from "react";
 import { toast } from "sonner";
 import { GenerateRecipeResponse } from "../../../utils/schemas/recipe";
+import { useTranslations } from 'next-intl';
 
 interface RecipeIngredient {
     ingredientId?: string;
@@ -31,6 +32,7 @@ export function useRecipeAIContent<T extends RecipeFormData>({
     const { mutate: generateRecipeContent } = useGenerateRecipeContent()
     const [isPendingDesc, setIsPendingDesc] = useState(false)
     const [isPendingInstr, setIsPendingInstr] = useState(false)
+    const t = useTranslations('toast');
 
     const onGenerate = (target: "description" | "instructions") => {
         const isPending = target === "description" ? setIsPendingDesc : setIsPendingInstr;
@@ -43,7 +45,7 @@ export function useRecipeAIContent<T extends RecipeFormData>({
         const servings = formValues.servings;
 
         if (!watchedIngredients || !Array.isArray(watchedIngredients) || watchedIngredients.length === 0) {
-            toast.error('Add ingredients first')
+            toast.error(t('addIngredientsFirst'))
             isPending(false)
             return
         }
@@ -76,10 +78,10 @@ export function useRecipeAIContent<T extends RecipeFormData>({
                 } else {
                     (setValue as unknown as UseFormSetValue<RecipeFormData>)('instructions', instructionsValue, {shouldDirty: true})
                 }
-                toast.success(`${target} is generated successfully`)
+                toast.success(t('generationSuccess', { target }))
             },
             onError: (error) => {
-                toast.error(error instanceof Error ? error.message : `${target} generation failed`)
+                toast.error(error instanceof Error ? error.message : t('generationFailed', { target }))
             },
             onSettled: () => {
                 isPending(false)

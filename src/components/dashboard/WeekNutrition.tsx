@@ -1,6 +1,7 @@
 import { ChefHat, Loader2 } from "lucide-react";
 import { useDashboard } from "@/app/hooks/useDashboard";
 import { Button } from "../ui/button";
+import { useTranslations } from 'next-intl';
 import {
    PieChart,
    Pie,
@@ -12,18 +13,20 @@ import type { PieLabelRenderProps } from "recharts";
 
 export default function WeekNutrition() {
    const { data: dashboardData, isLoading, isError, refetch } = useDashboard();
+   const t = useTranslations('dashboard');
+   const tCommon = useTranslations('common');
    const weeklyNutrition = dashboardData?.weeklyNutrition;
 
    if (isLoading) {
       return (
          <section className="w-full h-full border min-h-96 border-gray-200/80 rounded-xl flex flex-col shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
             <span className="flex w-full px-8 pb-6 pt-8 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Week Nutrition</h2>
+               <h2 className="text-3xl font-semibold">{t('weekNutrition')}</h2>
             </span>
             <div className="flex flex-col items-center gap-4 py-20">
                <Loader2 className="w-12 h-12 animate-spin text-primary" />
                <p className="text-base text-muted-foreground">
-                  Loading weekly nutrition data...
+                  {t('loadingWeeklyNutrition')}
                </p>
             </div>
          </section>
@@ -34,18 +37,18 @@ export default function WeekNutrition() {
       return (
          <section className="w-full h-full border border-gray-200/80 rounded-xl min-h-96 flex flex-col shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
             <span className="flex w-full px-8 pb-6 pt-8 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Week Nutrition</h2>
+               <h2 className="text-3xl font-semibold">{t('weekNutrition')}</h2>
             </span>
             <div className="flex flex-col items-center gap-4 py-20">
                <p className="text-base text-red-600 dark:text-red-400 font-medium">
-                  Error loading weekly nutrition data
+                  {t('errorLoadingWeeklyNutrition')}
                </p>
                <Button
                   onClick={() => refetch()}
                   variant="outline"
                   size="sm"
                >
-                  Retry
+                  {tCommon('retry')}
                </Button>
             </div>
          </section>
@@ -56,14 +59,14 @@ export default function WeekNutrition() {
       return (
          <section className="w-full h-full border border-gray-200/80 rounded-xl min-h-96 flex flex-col shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
             <span className="flex w-full px-8 pb-6 pt-8 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Week Nutrition</h2>
+               <h2 className="text-3xl font-semibold">{t('weekNutrition')}</h2>
             </span>
             <div className="flex flex-col items-center gap-3 py-20">
                <div className="text-muted-foreground">
                   <ChefHat size={64} />
                </div>
                <p className="text-muted-foreground text-base text-center">
-                  No meals cooked this week yet. Start cooking to see your nutrition breakdown!
+                  {t('noMealsThisWeek')}
                </p>
             </div>
          </section>
@@ -72,14 +75,14 @@ export default function WeekNutrition() {
 
    const pieData = [
       {
-         name: "Protein",
+         name: t('protein'),
          value: weeklyNutrition?.totalNutritionPerWeek.protein || 0,
       },
       {
-         name: "Carbs",
+         name: t('carbs'),
          value: weeklyNutrition?.totalNutritionPerWeek.carbs || 0,
       },
-      { name: "Fat", value: weeklyNutrition?.totalNutritionPerWeek.fat || 0 },
+      { name: t('fat'), value: weeklyNutrition?.totalNutritionPerWeek.fat || 0 },
    ];
 
    const COLORS = ["#1976D2", "#388E3C", "#FBC02D"]; // Carbs, Fat, Protein
@@ -123,7 +126,7 @@ export default function WeekNutrition() {
    return (
       <section className="w-full h-full border border-gray-200/80 rounded-xl min-h-96 flex flex-col shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
          <span className="flex w-full px-4 sm:px-8 pb-4 sm:pb-6 pt-6 sm:pt-8 justify-center sm:justify-between items-center">
-            <h2 className="text-2xl sm:text-3xl font-semibold text-center sm:text-left">Week Nutrition</h2>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-center sm:text-left">{t('weekNutrition')}</h2>
          </span>
 
          <div className="w-full px-4 sm:px-8 pb-6 sm:pb-8 pointer-events-none">
@@ -158,7 +161,7 @@ export default function WeekNutrition() {
                         ) || 0}
                      </div>
                      <div className="text-sm text-muted-foreground">
-                        Total Calories
+                        {t('totalCalories')}
                      </div>
                   </div>
                </div>
@@ -171,7 +174,7 @@ export default function WeekNutrition() {
                         0}
                      g
                   </div>
-                  <div className="text-xs text-carbs">Carbs</div>
+                  <div className="text-xs text-carbs">{t('carbs')}</div>
                </div>
                <div className="text-center p-4 bg-orange-50 rounded-lg">
                   <div className="text-lg font-bold text-fat">
@@ -179,7 +182,7 @@ export default function WeekNutrition() {
                         0}
                      g
                   </div>
-                  <div className="text-xs text-fat">Fat</div>
+                  <div className="text-xs text-fat">{t('fat')}</div>
                </div>
                <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <div className="text-lg font-bold text-protein">
@@ -188,7 +191,7 @@ export default function WeekNutrition() {
                      ) || 0}
                      g
                   </div>
-                  <div className="text-xs text-protein">Protein</div>
+                  <div className="text-xs text-protein">{t('protein')}</div>
                </div>
             </div>
          </div>

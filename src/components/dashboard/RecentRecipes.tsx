@@ -2,12 +2,15 @@
 import { ChefHat, ArrowRight, Heart, Star, Eye, Loader2 } from "lucide-react";
 import { useDashboard } from "@/app/hooks/useDashboard";
 import { calculateRecipeNutritionData } from "../../../utils/calculations/nutrition";
-import Link from "next/link";
+import { Link } from '@/i18n/routing';
 import RecipeDetailsCard from "../cards/RecipeDetailsCard";
 import { Button } from "../ui/button";
+import { useTranslations } from 'next-intl';
 
 export default function RecentRecipes() {
    const { data: dashboardData, isLoading, isError, refetch } = useDashboard();
+   const t = useTranslations('dashboard');
+   const tCommon = useTranslations('common');
    const recentRecipes = dashboardData?.recentRecipes.slice(0, 4) || [];
 
    if (isLoading) {
@@ -15,12 +18,12 @@ export default function RecentRecipes() {
          <section className="w-full h-full border min-h-96 border-gray-200/80 rounded-xl flex flex-col shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
             <span className="flex w-full px-4 sm:px-8 pb-4 sm:pb-6 pt-6 sm:pt-8 flex-col items-center gap-2 sm:flex-row sm:justify-between">
                <h2 className="text-2xl sm:text-3xl font-semibold text-center sm:text-left">
-                  Recent Recipes
+                  {t('recentRecipes')}
                </h2>
                <Link
                   className="flex items-center gap-1.5 text-primary text-sm sm:text-base font-semibold hover:text-primary/80 transition-all"
                   href="/recipes">
-                  View All <ArrowRight size={20} />
+                  {t('viewAll')} <ArrowRight size={20} />
                </Link>
             </span>
             <div className="flex flex-col items-center gap-3 py-20">
@@ -28,7 +31,7 @@ export default function RecentRecipes() {
                   <Loader2 className="w-12 h-12 animate-spin text-primary" />
                </div>
                <p className="text-muted-foreground text-base">
-                  Loading recipes...
+                  {t('loadingRecipes')}
                </p>
             </div>
          </section>
@@ -39,14 +42,14 @@ export default function RecentRecipes() {
       return (
          <section className="w-full h-full border border-gray-200/80 rounded-xl min-h-96 flex flex-col shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
             <span className="flex w-full px-8 pb-6 pt-8 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Recent Recipes</h2>
+               <h2 className="text-3xl font-semibold">{t('recentRecipes')}</h2>
             </span>
             <div className="flex flex-col items-center gap-4 py-20">
                <p className="text-base text-red-600 dark:text-red-400 font-medium">
-                  Error loading recipes
+                  {t('errorLoadingRecipes')}
                </p>
                <Button onClick={() => refetch()} variant="outline" size="sm">
-                  Retry
+                  {tCommon('retry')}
                </Button>
             </div>
          </section>
@@ -57,11 +60,11 @@ export default function RecentRecipes() {
       return (
          <section className="w-full h-full border border-gray-200/80 rounded-xl min-h-96 flex flex-col items-center justify-center shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
             <span className="flex w-full px-8 pb-6 pt-8 justify-between items-center">
-               <h2 className="text-3xl font-semibold">Recent Recipes</h2>
+               <h2 className="text-3xl font-semibold">{t('recentRecipes')}</h2>
                <Link
                   className="flex items-center gap-1.5 text-primary text-base font-semibold hover:text-primary/80 transition-all"
                   href="/recipes">
-                  View All <ArrowRight size={20} />
+                  {t('viewAll')} <ArrowRight size={20} />
                </Link>
             </span>
             <div className="flex flex-col items-center gap-3 py-20">
@@ -69,7 +72,7 @@ export default function RecentRecipes() {
                   <ChefHat size={64} />
                </div>
                <p className="text-muted-foreground text-base">
-                  No recipes yet. Create your first recipe!
+                  {t('noRecipesYet')}
                </p>
             </div>
          </section>
@@ -79,11 +82,11 @@ export default function RecentRecipes() {
    return (
       <section className="w-full h-full border border-gray-200/80 rounded-xl min-h-96 flex flex-col shadow-md dark:shadow-muted-foreground/10 bg-white dark:bg-gray-950">
          <span className="flex w-full px-8 pb-6 pt-8 justify-between items-center">
-            <h2 className="text-3xl font-semibold">Recent Recipes</h2>
+            <h2 className="text-3xl font-semibold">{t('recentRecipes')}</h2>
             <Link
                className="flex items-center gap-1.5 text-primary text-base font-semibold hover:text-primary/80 transition-all"
                href="/recipes">
-               View All <ArrowRight size={20} />
+               {t('viewAll')} <ArrowRight size={20} />
             </Link>
          </span>
 
@@ -125,14 +128,13 @@ export default function RecentRecipes() {
                                     {Number(nutrition.calories).toFixed(0)} kcal
                                  </span>
                                  <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950/30 text-protein dark:text-blue-400 font-medium">
-                                    {Number(nutrition.protein).toFixed(1)}g
-                                    Protein
+                                    {Number(nutrition.protein).toFixed(1)}g {t('protein')}
                                  </span>
                                  <span className="inline-flex items-center px-2 py-1 rounded-md bg-green-50 dark:bg-green-950/30 text-carbs dark:text-green-400 font-medium">
-                                    {Number(nutrition.carbs).toFixed(1)}g Carbs
+                                    {Number(nutrition.carbs).toFixed(1)}g {t('carbs')}
                                  </span>
                                  <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-50 dark:bg-red-950/30 text-fat dark:text-red-400 font-medium">
-                                    {Number(nutrition.fat).toFixed(1)}g Fat
+                                    {Number(nutrition.fat).toFixed(1)}g {t('fat')}
                                  </span>
                               </div>
                            </div>

@@ -1,8 +1,10 @@
 import { TrendingUp, Utensils, Flame } from "lucide-react";
 import { useDashboard } from "@/app/hooks/useDashboard";
+import { useTranslations } from 'next-intl';
 
 export default function HeroSection() {
   const { data: dashboardData } = useDashboard();
+  const t = useTranslations('dashboard');
   const totalRecipes = dashboardData?.totalRecipes || 0;
   const todayCooks = dashboardData?.cookingStats.todayCooks || 0;
   const thisWeekCooks = dashboardData?.cookingStats.thisWeekCooks || 0;
@@ -14,10 +16,10 @@ export default function HeroSection() {
     >
       <div className="flex flex-col items-center justify-center gap-2 md:gap-3 text-center max-w-3xl">
         <h1 id="dashboard-hero-title" className="text-2xl sm:text-3xl md:text-5xl font-semibold">
-          Welcome to NutriTrack! 👋
+          {t('welcome')}
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base md:text-xl">
-          Ready to cook something delicious?
+          {t('readyToCook')}
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 w-full max-w-6xl mx-auto gap-4 sm:gap-6 md:gap-8 mt-8 md:mt-12">
@@ -26,7 +28,7 @@ export default function HeroSection() {
             <Utensils className="w-6 h-6 md:w-7 md:h-7" />
           </div>
           <div className="flex flex-col items-end sm:items-start">
-            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">Today&apos;s Meals</p>
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">{t('todayMeals')}</p>
             <p className="text-foreground text-xl sm:text-2xl md:text-3xl font-semibold">{todayCooks}</p>
           </div>
         </div>
@@ -35,7 +37,7 @@ export default function HeroSection() {
             <TrendingUp className="w-6 h-6 md:w-7 md:h-7" />
           </div>
           <div className="flex flex-col items-end sm:items-start">
-            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">Total Recipes</p>
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">{t('totalRecipes')}</p>
             <p className="text-foreground text-xl sm:text-2xl md:text-3xl font-semibold">{totalRecipes}</p>
           </div>
         </div>
@@ -44,7 +46,7 @@ export default function HeroSection() {
             <Flame className="w-6 h-6 md:w-7 md:h-7" />
           </div>
           <div className="flex flex-col items-end sm:items-start">
-            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">This Week&apos;s Cooking</p>
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base">{t('thisWeekCooking')}</p>
             <p className="text-foreground text-xl sm:text-2xl md:text-3xl font-semibold">{thisWeekCooks}</p>
           </div>
         </div>

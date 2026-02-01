@@ -7,8 +7,10 @@ import { RecipeCreateForm } from "@/components/forms/RecipeCreateForm";
 import { useRecipes } from "@/app/hooks/useRecipes";
 import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 
 function RecipesPageContent() {
+   const t = useTranslations('recipes');
    const searchParams = useSearchParams();
    const ingredientsParam = searchParams.get("ingredients");
    const [searchTerm, setSearchTerm] = useState("");
@@ -34,16 +36,16 @@ function RecipesPageContent() {
       <div className="w-full mt-10 flex flex-col gap-8">
          <div className="flex flex-col md:flex-row w-full justify-between items-center">
             <div className="flex flex-col gap-2">
-               <h1 className="text-3xl font-bold">Recipes</h1>
+               <h1 className="text-3xl font-bold">{t('title')}</h1>
                <h3 className="text-muted-foreground text-lg font-normal">
                   <span>
-                     Total Recipes:{" "}
-                     {totalRecipes !== undefined ? totalRecipes : "Loading..."}
+                     {t('totalRecipes')}:{" "}
+                     {totalRecipes !== undefined ? totalRecipes : t('loading')}
                   </span>
                </h3>
             </div>
             <RecipeCreateForm>
-               <Button>Add Recipe</Button>
+               <Button>{t('addRecipe')}</Button>
             </RecipeCreateForm>
          </div>
          <NutritionFilters
@@ -80,14 +82,15 @@ function RecipesPageContent() {
 }
 
 function RecipesPageLoading() {
+   const t = useTranslations('recipes');
    return (
       <div className="w-full mt-10 flex flex-col gap-8">
          <div className="flex flex-col md:flex-row w-full justify-between items-center">
             <div className="flex flex-col gap-2">
-               <h1 className="text-3xl font-bold">Recipes</h1>
+               <h1 className="text-3xl font-bold">{t('title')}</h1>
                <h3 className="text-muted-foreground text-lg font-normal">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Loading...</span>
+                  <span>{t('loading')}</span>
                </h3>
             </div>
          </div>
