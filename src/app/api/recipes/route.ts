@@ -55,9 +55,14 @@ export async function GET(req: NextRequest) {
       const sortOrder =
          (searchParams.get("sortOrder") as "asc" | "desc") || "asc";
 
+      // Valid Prisma fields for Recipe model (excluding computed fields)
+      const validPrismaFields = ["name", "description", "instructions", "servings", "cookingTime", "rating", "isFavorite", "createdAt", "updatedAt"];
+      
       let orderBy: { [key: string]: "asc" | "desc" } | undefined = undefined;
 
-      if (sortBy) {
+      // Only use orderBy for Prisma if it's a valid database field
+      // Computed fields (calories, carbs, protein, fat) will be sorted after fetching
+      if (sortBy && validPrismaFields.includes(sortBy)) {
          orderBy = { [sortBy]: sortOrder };
       }
 

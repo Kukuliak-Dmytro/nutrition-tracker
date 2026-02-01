@@ -83,7 +83,20 @@
     "carbs": "Вуглеводи",
     "fat": "Жири",
     "g": "г",
-    "kcal": "ккал"
+    "kcal": "ккал",
+    "backToRecipes": "Назад до рецептів",
+    "errorLoading": "Помилка завантаження рецепта",
+    "servingsLabel": "Порції",
+    "cookingTimeLabel": "Час приготування",
+    "ratingLabel": "Рейтинг",
+    "nutritionPerServing": "Харчування на порцію",
+    "totalRecipeNutrition": "Загальна харчова цінність рецепта",
+    "ingredientsTitle": "Інгредієнти",
+    "instructionsTitle": "Інструкції",
+    "noInstructions": "Інструкції для цього рецепта не надано.",
+    "cookedToday": "Я приготував це сьогодні",
+    "editRecipe": "Редагувати рецепт",
+    "notAvailable": "Н/Д"
   },
   "ingredients": {
     "title": "Інгредієнти",

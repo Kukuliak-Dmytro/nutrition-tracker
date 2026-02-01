@@ -34,6 +34,18 @@ export const getRecipes = async (filters: Partial<RecipeQuery> = {}): Promise<{ 
   }
 };
 
+export const getRecipe = async (id: string): Promise<RecipeResponse> => {
+  try {
+    const response = await http.get(`/recipes/${id}`);
+    return RecipeResponseSchema.parse(response.data);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new Error("Invalid recipe data: " + error.message);
+    }
+    throw new Error(getErrorMessage(error));
+  }
+};
+
 export const createRecipe = async (
   recipe: CreateRecipe
 ): Promise<RecipeResponse> => {

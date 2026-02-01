@@ -3,7 +3,6 @@ import { ChefHat, ArrowRight, Heart, Star, Eye, Loader2 } from "lucide-react";
 import { useDashboard } from "@/app/hooks/useDashboard";
 import { calculateRecipeNutritionData } from "../../../utils/calculations/nutrition";
 import { Link } from '@/i18n/routing';
-import RecipeDetailsCard from "../cards/RecipeDetailsCard";
 import { Button } from "../ui/button";
 import { useTranslations } from 'next-intl';
 
@@ -95,9 +94,11 @@ export default function RecentRecipes() {
                {recentRecipes.map((recipe) => {
                   const nutrition = calculateRecipeNutritionData(recipe);
                   return (
-                     <div
+                     <Link
                         key={recipe.id}
-                        className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                        href={`/recipes/${recipe.id}`}
+                        prefetch={true}
+                        className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow block">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                            <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
@@ -140,17 +141,17 @@ export default function RecentRecipes() {
                            </div>
 
                            <div className="ml-4">
-                              <RecipeDetailsCard recipe={recipe}>
+                              <Link href={`/recipes/${recipe.id}`} prefetch={true}>
                                  <Button
                                     variant="ghost"
                                     size="icon"
-                                    className=" hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
+                                    className="hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
                                     <Eye className="size-5" />
                                  </Button>
-                              </RecipeDetailsCard>
+                              </Link>
                            </div>
                         </div>
-                     </div>
+                     </Link>
                   );
                })}
             </div>

@@ -7,6 +7,7 @@ import {
 import {
    createRecipe,
    getRecipes,
+   getRecipe,
    updateRecipe,
    deleteRecipe,
    toggleFavorite,
@@ -27,6 +28,17 @@ export const recipesQueryOptions = (filters: Partial<RecipeQuery> = {}) => {
 
 export const useRecipes = (filters: Partial<RecipeQuery> = {}) => {
    return useQuery(recipesQueryOptions(filters));
+}
+
+export const recipeQueryOptions = (id: string) => {
+   return queryOptions({
+      queryKey: ["recipe", id],
+      queryFn: () => getRecipe(id),
+   });
+};
+
+export const useRecipe = (id: string) => {
+   return useQuery(recipeQueryOptions(id));
 }
 
 export const useCreateRecipe = () => {

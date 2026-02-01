@@ -9,7 +9,6 @@ import {
    Eye,
 } from "lucide-react";
 import { Link } from '@/i18n/routing';
-import RecipeDetailsCard from "@/components/cards/RecipeDetailsCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDashboard } from "@/app/hooks/useDashboard";
 import { Button } from "../ui/button";
@@ -108,20 +107,23 @@ export default function CookingHistory() {
                   className="hover:shadow-md transition-shadow">
                   <CardContent className="px-4 py-2">
                      <div className="flex items-start justify-between ">
-                        <div className="flex items-center gap-2">
+                        <Link
+                           href={`/recipes/${history.recipe.id}`}
+                           prefetch={true}
+                           className="flex items-center gap-2 flex-1 hover:opacity-80 transition-opacity">
                            <ChefHat className="h-5 w-5 text-orange-500" />
                            <h3 className="font-semibold text-lg leading-tight">
                               {history.recipe.name}
                            </h3>
-                        </div>
-                        <RecipeDetailsCard recipe={history.recipe}>
+                        </Link>
+                        <Link href={`/recipes/${history.recipe.id}`} prefetch={true}>
                            <Button
                               variant="ghost"
                               size="icon"
                               className="hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
                               <Eye className="size-5" />
                            </Button>
-                        </RecipeDetailsCard>
+                        </Link>
                      </div>
 
                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">

@@ -83,7 +83,20 @@
     "carbs": "Carbs",
     "fat": "Fat",
     "g": "g",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "backToRecipes": "Back to Recipes",
+    "errorLoading": "Error loading recipe",
+    "servingsLabel": "Servings",
+    "cookingTimeLabel": "Cooking Time",
+    "ratingLabel": "Rating",
+    "nutritionPerServing": "Nutrition Per Serving",
+    "totalRecipeNutrition": "Total Recipe Nutrition",
+    "ingredientsTitle": "Ingredients",
+    "instructionsTitle": "Instructions",
+    "noInstructions": "No instructions provided for this recipe.",
+    "cookedToday": "I Cooked This Today",
+    "editRecipe": "Edit Recipe",
+    "notAvailable": "N/A"
   },
   "ingredients": {
     "title": "Ingredients",

@@ -21,7 +21,7 @@ import { Button } from "../ui/button";
 import CookingHistoryDelete from "@/components/forms/CookingHistoryDelete";
 import { useEffect, useRef } from "react";
 import { calculateRecipeNutritionData } from "../../../utils/calculations/nutrition";
-import RecipeDetailsCard from "../cards/RecipeDetailsCard";
+import { Link } from "@/i18n/routing";
 
 interface CookingHistoryTablesProps {
    searchTerm: string;
@@ -241,15 +241,14 @@ export default function CookingHistoryTables({
 
                               <TableCell className="py-6">
                                  <div className="flex items-center justify-end gap-2">
-                                    <RecipeDetailsCard
-                                       recipe={cookingHistory.recipe}>
+                                    <Link href={`/recipes/${cookingHistory.recipe.id}`} prefetch={true}>
                                        <Button
                                           variant="ghost"
                                           size="icon"
                                           className="h-12 w-12 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
                                           <Eye className="size-6" />
                                        </Button>
-                                    </RecipeDetailsCard>
+                                    </Link>
                                     <CookingHistoryDelete
                                        cookingHistory={cookingHistory}>
                                        <Button

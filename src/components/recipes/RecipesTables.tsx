@@ -15,7 +15,7 @@ import { useRecipes, useToggleFavorite } from "@/app/hooks/useRecipes";
 import { Eye, Heart, Loader2, Pencil, Trash2, ChefHat } from "lucide-react";
 import { Button } from "../ui/button";
 import RecipeDelete from "@/components/forms/RecipeDelete";
-import RecipeDetailsCard from "../cards/RecipeDetailsCard";
+import { Link } from "@/i18n/routing";
 type SortableField =
    | "name"
    | "calories"
@@ -195,7 +195,10 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
                         key={recipe.id}
                         className="hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors">
                         <TableCell className="py-8 max-w-xs">
-                           <div className="flex flex-col gap-1.5">
+                           <Link
+                              href={`/recipes/${recipe.id}`}
+                              prefetch={true}
+                              className="flex flex-col gap-1.5 hover:opacity-80 transition-opacity">
                               <span className="text-xl font-semibold text-foreground truncate">
                                  {recipe.name}
                               </span>
@@ -204,7 +207,7 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
                                     {recipe.description}
                                  </span>
                               )}
-                           </div>
+                           </Link>
                         </TableCell>
                         <TableCell className="py-8">
                            <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-base">
@@ -278,14 +281,14 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
                                     <Trash2 className="w-5 h-5" />
                                  </Button>
                               </RecipeDelete>
-                              <RecipeDetailsCard recipe={recipe}>
+                              <Link href={`/recipes/${recipe.id}`} prefetch={true}>
                                  <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-12 w-12 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
                                     <Eye className="w-5 h-5" />
                                  </Button>
-                              </RecipeDetailsCard>
+                              </Link>
                            </div>
                         </TableCell>
                      </TableRow>
