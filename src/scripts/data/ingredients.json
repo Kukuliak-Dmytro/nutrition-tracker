@@ -1,5 +1,4 @@
-[
-  {
+[  {
     "name": "Фарш курячий",
     "category": "М'ясо",
     "calories": 189,
@@ -270,5 +269,133 @@
     "protein": 14,
     "carbs": 3.5,
     "fat": 9
+  },
+  {
+    "name": "Цибуля порей",
+    "category": "Овочі",
+    "calories": 61,
+    "protein": 1.5,
+    "carbs": 14.2,
+    "fat": 0.3
+  },
+  {
+    "name": "Вершки",
+    "category": "Молочні продукти",
+    "calories": 300,
+    "protein": 2.5,
+    "carbs": 3.0,
+    "fat": 30.0
+  },
+  {
+    "name": "Свиняча шийка",
+    "category": "М'ясо",
+    "calories": 267,
+    "protein": 16.0,
+    "carbs": 0,
+    "fat": 21.6
+  },
+  {
+    "name": "Дріжджі сухі",
+    "category": "Борошно",
+    "calories": 325,
+    "protein": 40.0,
+    "carbs": 41.0,
+    "fat": 7.0
+  },
+  {
+    "name": "Олія оливкова",
+    "category": "Жири та олії",
+    "calories": 884,
+    "protein": 0,
+    "carbs": 0,
+    "fat": 100.0
+  },
+  {
+    "name": "Сода харчова",
+    "category": "Прянощі",
+    "calories": 0,
+    "protein": 0,
+    "carbs": 0,
+    "fat": 0
+  },
+  {
+    "name": "Оцет",
+    "category": "Прянощі",
+    "calories": 18,
+    "protein": 0,
+    "carbs": 0.9,
+    "fat": 0
+  },
+  {
+    "name": "Нут сухий",
+    "category": "Бобові",
+    "calories": 364,
+    "protein": 19.0,
+    "carbs": 60.7,
+    "fat": 6.0
+  },
+  {
+    "name": "Імбир",
+    "category": "Овочі",
+    "calories": 80,
+    "protein": 1.8,
+    "carbs": 17.8,
+    "fat": 0.8
+  },
+  {
+    "name": "Перець чилі",
+    "category": "Овочі",
+    "calories": 40,
+    "protein": 2.0,
+    "carbs": 9.5,
+    "fat": 0.2
+  },
+  {
+    "name": "Приправа карі",
+    "category": "Прянощі",
+    "calories": 325,
+    "protein": 14.3,
+    "carbs": 55.8,
+    "fat": 14.0
+  },
+  {
+    "name": "Паста з твердих сортів",
+    "category": "Борошно",
+    "calories": 371,
+    "protein": 13.0,
+    "carbs": 75.0,
+    "fat": 1.5
+  },
+  {
+    "name": "Томатний сік",
+    "category": "Напої",
+    "calories": 17,
+    "protein": 0.8,
+    "carbs": 3.5,
+    "fat": 0.1
+  },
+  {
+    "name": "Базилік сушений",
+    "category": "Зелень",
+    "calories": 233,
+    "protein": 22.9,
+    "carbs": 47.8,
+    "fat": 4.1
+  },
+  {
+    "name": "Тим'ян сушений",
+    "category": "Зелень",
+    "calories": 276,
+    "protein": 9.1,
+    "carbs": 63.9,
+    "fat": 7.4
+  },
+  {
+    "name": "Чебрець сушений",
+    "category": "Зелень",
+    "calories": 276,
+    "protein": 9.1,
+    "carbs": 63.9,
+    "fat": 7.4
   }
 ]
