@@ -8,6 +8,7 @@ interface IngredientData {
   protein: number;
   carbs: number;
   fat: number;
+  fiber?: number;
 }
 
 async function importIngredientsToDB() {
@@ -24,6 +25,7 @@ async function importIngredientsToDB() {
           proteinPer100g: ingredient.protein,
           carbsPer100g: ingredient.carbs,
           fatPer100g: ingredient.fat,
+          fiberPer100g: ingredient.fiber ?? 0,
           category: ingredient.category || "Інше",
           isCustom: false,
           createdAt: new Date(),
@@ -34,6 +36,7 @@ async function importIngredientsToDB() {
           proteinPer100g: ingredient.protein,
           carbsPer100g: ingredient.carbs,
           fatPer100g: ingredient.fat,
+          fiberPer100g: ingredient.fiber ?? 0,
           category: ingredient.category || "Інше",
           isCustom: false,
           createdAt: new Date(),

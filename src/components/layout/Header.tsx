@@ -1,80 +1,195 @@
-'use client';
-import { ChefHat, Menu } from "lucide-react";
-import { ModeToggle } from "./ThemeSwitcher";
-import { Link } from '@/i18n/routing';
-import { slide as MenuSlide } from "react-burger-menu";
+"use client";
 import { useState } from "react";
-import { useTranslations } from 'next-intl';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import {
+  Flame,
+  CalendarDays,
+  Utensils,
+  Apple,
+  Target,
+  Menu,
+  X,
+} from "lucide-react";
+import { ModeToggle } from "./ThemeSwitcher";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { Link, usePathname } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { useDailyGoals } from "@/app/hooks/useGoals";
+import { DailyGoalsModal } from "../dashboard/DailyGoalsModal";
 
 export default function Header() {
-   const [isOpen, setIsOpen] = useState(false);
-   const t = useTranslations('navigation');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
+  const t = useTranslations("navigation");
+  const tDash = useTranslations("dashboard");
+  const tMeals = useTranslations("meals");
+  const pathname = usePathname();
+  const { data: goals } = useDailyGoals();
 
-   return (
-      <header className="border-b border-border relative">
-         <div className="mx-auto w-full max-w-[2000px] px-6 lg:px-10 h-16 grid grid-cols-[1fr_auto_1fr] md:grid-cols-[1fr_auto_1fr_auto] items-center">
-            <div className="flex items-center gap-2 text-primary">
-               <ChefHat size={30} />
-               <h2>NutriTrack</h2>
+  const navLinks = [
+    {
+      href: "/",
+      label: t("dashboard"),
+      icon: CalendarDays,
+      isActive: pathname === "/",
+    },
+    {
+      href: "/recipes",
+      label: t("recipes"),
+      icon: Utensils,
+      isActive: pathname.startsWith("/recipes"),
+    },
+    {
+      href: "/ingredients",
+      label: t("ingredients"),
+      icon: Apple,
+      isActive: pathname.startsWith("/ingredients"),
+    },
+  ];
+
+  return (
+    <>
+      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/90 backdrop-blur-md transition-all">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* 1. Brand Logo */}
+          <Link
+            href="/"
+            className="flex items-center gap-2.5 transition-transform hover:scale-[1.02] focus:outline-none">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm shadow-emerald-500/25">
+              <Flame className="h-5 w-5 fill-current" />
             </div>
-            <nav className="justify-self-center hidden md:block">
-               <ul className="flex items-center gap-8 text-muted-foreground font-semibold">
-                  <li className="transition-colors hover:text-primary">
-                     <Link href="/">{t('dashboard')}</Link>
-                  </li>
-                  <li className="transition-colors hover:text-primary">
-                     <Link href="/ingredients">{t('ingredients')}</Link>
-                  </li>
-                  <li className="transition-colors hover:text-primary">
-                     <Link href="/recipes">{t('recipes')}</Link>
-                  </li>
-                  <li className="transition-colors hover:text-primary">
-                     <Link href="/cooking-history">{t('history')}</Link>
-                  </li>
-               </ul>
+            <div className="flex flex-col">
+              <span className="text-base font-bold tracking-tight text-foreground leading-tight">
+                NutriTrack
+              </span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("caloriesAndMacros")}
+              </span>
+            </div>
+          </Link>
+
+          {/* 2. Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-1.5 p-1 rounded-2xl bg-muted/40 border border-border/50">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    link.isActive
+                      ? "bg-background text-primary shadow-xs border border-border/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  }`}>
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* 3. Right Utilities (Goals, Language, Theme) */}
+          <div className="hidden md:flex items-center gap-2.5">
+            {/* Quick Goals Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsGoalsModalOpen(true)}
+              className="h-9 gap-1.5 rounded-xl text-xs font-medium border-border/70 hover:border-primary/40 hover:bg-primary/5 transition-all">
+              <Target className="h-3.5 w-3.5 text-primary" />
+              <span>
+                {goals?.calories
+                  ? t("quickGoals", {
+                      calories: goals.calories,
+                      maintenance: goals.maintenanceCalories || 2850,
+                    })
+                  : t("goals")}
+              </span>
+            </Button>
+
+            <LanguageSwitcher />
+            <ModeToggle />
+          </div>
+
+          {/* 4. Mobile Menu Toggle Button */}
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsGoalsModalOpen(true)}
+              className="h-9 w-9 rounded-xl"
+              aria-label={tDash("setupGoals")}>
+              <Target className="h-4 w-4 text-primary" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              className="h-9 w-9 rounded-xl"
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Menu">
+              {isMobileMenuOpen ? (
+                <X className="h-4 w-4" />
+              ) : (
+                <Menu className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* 5. Mobile Dropdown Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-b border-border/80 bg-background/95 backdrop-blur-lg px-4 pt-2 pb-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+            <nav className="flex flex-col gap-1.5">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                      link.isActive
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    }`}>
+                    <Icon className="h-4 w-4" />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
             </nav>
-            <div className="absolute right-20 hidden md:flex items-center gap-4">
-               <LanguageSwitcher />
-               <ModeToggle />
+
+            <div className="flex items-center justify-between pt-3 border-t border-border/50">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsGoalsModalOpen(true);
+                }}
+                className="h-9 gap-2 rounded-xl text-xs font-medium">
+                <Target className="h-3.5 w-3.5 text-primary" />
+                <span>
+                  {t("goals")} ({goals?.calories ? `${goals.calories} ${tMeals("kcal")}` : tDash("setupGoals")})
+                </span>
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher />
+                <ModeToggle />
+              </div>
             </div>
-            <button
-               type="button"
-               className="md:hidden rounded-md p-2 absolute right-4"
-               aria-expanded={isOpen}
-               aria-label="Toggle navigation"
-               onClick={() => setIsOpen((prev) => !prev)}>
-               <Menu size={24} />
-            </button>
-            <MenuSlide
-               right
-               isOpen={isOpen}
-               onStateChange={(s) => setIsOpen(s.isOpen)}
-               customBurgerIcon={false}
-               customCrossIcon={false}
-               width={"80%"}
-               overlayClassName="absolute top-0 left-0"
-               disableAutoFocus>
-               <ul className="flex items-center gap-8 font-semibold">
-                  <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/">{t('dashboard')}</Link>
-                  </li>
-                  <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/ingredients">{t('ingredients')}</Link>
-                  </li>
-                  <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/recipes">{t('recipes')}</Link>
-                  </li>
-                  <li className="transition-colors hover:text-primary active:text-primary" onClick={() => setIsOpen(false)}>
-                     <Link href="/cooking-history">{t('history')}</Link>
-                  </li>
-               </ul>
-               <div className="md:hidden flex flex-col gap-4">
-                  <LanguageSwitcher />
-                  <ModeToggle />
-               </div>
-            </MenuSlide>
-         </div>
+          </div>
+        )}
       </header>
-   );
+
+      {/* Global Goals Settings Modal (accessible from Header anywhere) */}
+      <DailyGoalsModal
+        isOpen={isGoalsModalOpen}
+        onOpenChange={setIsGoalsModalOpen}
+      />
+    </>
+  );
 }

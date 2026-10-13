@@ -17,6 +17,7 @@ import { IngredientResponse } from "../../../utils/schemas";
 import IngredientDelete from "@/components/forms/IngredientDelete";
 import { NutritionFilters } from "../ui/NutritionFilters";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 type SortableField =
   | "name"
@@ -24,10 +25,14 @@ type SortableField =
   | "proteinPer100g"
   | "carbsPer100g"
   | "fatPer100g"
+  | "fiberPer100g"
   | "category"
   | "createdAt";
 
 export default function IngredientsContentClient() {
+  const t = useTranslations("ingredients");
+  const tMeals = useTranslations("meals");
+  const tCommon = useTranslations("common");
   const searchParams = useSearchParams();
   const [inputValue, setInputValue] = useState(searchParams.get("query") || "");
   const [searchTerm, setSearchTerm] = useState(searchParams.get("query") || "");
@@ -144,74 +149,81 @@ export default function IngredientsContentClient() {
           <TableHeader>
             <TableRow className="bg-gray-50/80 dark:bg-gray-900/50 hover:bg-gray-50/80 dark:hover:bg-gray-900/50 border-b-2 border-gray-200 dark:border-gray-800 h-16">
               <SortableHeader
-                field="name"
-                sortState={sortState}
-                onSort={handleSort}
+                 field="name"
+                 sortState={sortState}
+                 onSort={handleSort}
               >
-                Name
+                {t("name")}
               </SortableHeader>
               <SortableHeader
-                field="caloriesPer100g"
-                sortState={sortState}
-                onSort={handleSort}
+                 field="caloriesPer100g"
+                 sortState={sortState}
+                 onSort={handleSort}
               >
-                Calories
+                {t("calories")}
               </SortableHeader>
               <SortableHeader
-                field="proteinPer100g"
-                sortState={sortState}
-                onSort={handleSort}
+                 field="proteinPer100g"
+                 sortState={sortState}
+                 onSort={handleSort}
               >
-                Protein
+                {t("protein")}
               </SortableHeader>
               <SortableHeader
-                field="carbsPer100g"
-                sortState={sortState}
-                onSort={handleSort}
+                 field="carbsPer100g"
+                 sortState={sortState}
+                 onSort={handleSort}
               >
-                Carbs
+                {t("carbs")}
               </SortableHeader>
               <SortableHeader
-                field="fatPer100g"
-                sortState={sortState}
-                onSort={handleSort}
+                 field="fatPer100g"
+                 sortState={sortState}
+                 onSort={handleSort}
               >
-                Fat
+                {t("fat")}
               </SortableHeader>
               <SortableHeader
-                field="category"
-                sortState={sortState}
-                onSort={handleSort}
+                 field="fiberPer100g"
+                 sortState={sortState}
+                 onSort={handleSort}
               >
-                Category
+                {t("fiber")}
               </SortableHeader>
-              <TableHead className="text-right font-semibold text-lg">Actions</TableHead>
+              <SortableHeader
+                 field="category"
+                 sortState={sortState}
+                 onSort={handleSort}
+              >
+                {t("category")}
+              </SortableHeader>
+              <TableHead className="text-right font-semibold text-lg">{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
-                  <span className="text-base text-muted-foreground">Loading ingredients...</span>
+                <TableCell colSpan={8} className="text-center py-12">
+                  <span className="text-base text-muted-foreground">{t("loadingIngredients")}</span>
                 </TableCell>
               </TableRow>
             )}
             {isError && (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-center py-12"
                 >
                   <div className="flex flex-col items-center gap-4">
                     <span className="text-base font-medium text-red-600 dark:text-red-400">
-                      Failed to load ingredients. Please try again.
+                      {t("errorLoadingIngredients")}
                     </span>
                     <Button
                       onClick={() => refetch()}
                       variant="outline"
                       size="sm"
                     >
-                      Retry
+                      {tCommon("retry")}
                     </Button>
                   </div>
                 </TableCell>
@@ -220,10 +232,10 @@ export default function IngredientsContentClient() {
 
             {!isLoading && !isError && filteredIngredients?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
+                <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-3">
                     <ChefHat className="text-muted-foreground" size={48} />
-                    <span className="text-base text-muted-foreground">No ingredients found. Add your first ingredient!</span>
+                    <span className="text-base text-muted-foreground">{t("noIngredientsPrompt")}</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -241,22 +253,27 @@ export default function IngredientsContentClient() {
                 </TableCell>
                 <TableCell className="py-4">
                   <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-base">
-                    {ingredient.caloriesPer100g.toString()}kcal
+                    {ingredient.caloriesPer100g.toString()} {tMeals("kcal")}
                   </span>
                 </TableCell>
                 <TableCell className="py-4">
                   <span className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 font-semibold text-base">
-                    {ingredient.proteinPer100g.toString()}g
+                    {ingredient.proteinPer100g.toString()}{tMeals("grams")}
                   </span>
                 </TableCell>
                 <TableCell className="py-4">
                   <span className="inline-flex items-center px-4 py-2 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 font-semibold text-base">
-                    {ingredient.carbsPer100g.toString()}g
+                    {ingredient.carbsPer100g.toString()}{tMeals("grams")}
                   </span>
                 </TableCell>
                 <TableCell className="py-4">
                   <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-base">
-                    {ingredient.fatPer100g.toString()}g
+                    {ingredient.fatPer100g.toString()}{tMeals("grams")}
+                  </span>
+                </TableCell>
+                <TableCell className="py-4">
+                  <span className="inline-flex items-center px-4 py-2 rounded-lg bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 font-semibold text-base">
+                    {Number(ingredient.fiberPer100g || 0).toString()}{tMeals("grams")}
                   </span>
                 </TableCell>
                 <TableCell className="py-4">
@@ -296,7 +313,7 @@ export default function IngredientsContentClient() {
 
         {isFetchingNextPage && (
           <div className="text-center py-6 text-base text-muted-foreground">
-            Loading more ingredients...
+            {t("loadingMoreIngredients")}
           </div>
         )}
 
@@ -304,7 +321,7 @@ export default function IngredientsContentClient() {
           filteredIngredients?.length &&
           filteredIngredients.length > 0 && (
             <div className="text-center py-6 text-base text-muted-foreground">
-              No more ingredients to load
+              {t("noMoreIngredients")}
             </div>
           )}
       </div>

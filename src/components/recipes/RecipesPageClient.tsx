@@ -1,20 +1,23 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { NutritionFilters } from "@/components/ui/NutritionFilters";
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import RecipesTables from "@/components/recipes/RecipesTables";
 import { RecipeCreateForm } from "@/components/forms/RecipeCreateForm";
 import { useRecipes } from "@/app/hooks/useRecipes";
 import { useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { useTranslations } from 'next-intl';
+import { PlusIcon } from "lucide-react";
+import { RecipeStatus } from "../../../utils/schemas/recipe";
 
-function RecipesPageContent() {
-   const t = useTranslations('recipes');
+import { useTranslations } from "next-intl";
+
+export default function RecipesPageClient() {
+   const t = useTranslations("recipes");
    const searchParams = useSearchParams();
    const ingredientsParam = searchParams.get("ingredients");
    const [searchTerm, setSearchTerm] = useState("");
    const [inputValue, setInputValue] = useState("");
+   const [statusTab, setStatusTab] = useState<RecipeStatus | "ALL">("RECENT");
    const [filters, setFilters] = useState({
       calories: { min: 0, max: 3000 },
       protein: { min: 0, max: 200 },
@@ -29,25 +32,55 @@ function RecipesPageContent() {
    ) => {
       setFilters((prev) => ({ ...prev, [nutrient]: { min, max } }));
    };
-   const { data: totalData } = useRecipes({});
-   const totalRecipes = totalData?.totalRecipes;
+
+   const { data: recentData } = useRecipes({ status: "RECENT" });
+   const { data: archiveData } = useRecipes({ status: "ARCHIVED" });
+
+   const recentCount = recentData?.totalRecipes ?? 0;
+   const archiveCount = archiveData?.totalRecipes ?? 0;
 
    return (
-      <div className="w-full mt-10 flex flex-col gap-8">
-         <div className="flex flex-col md:flex-row w-full justify-between items-center">
-            <div className="flex flex-col gap-2">
-               <h1 className="text-3xl font-bold">{t('title')}</h1>
-               <h3 className="text-muted-foreground text-lg font-normal">
-                  <span>
-                     {t('totalRecipes')}:{" "}
-                     {totalRecipes !== undefined ? totalRecipes : t('loading')}
-                  </span>
-               </h3>
+      <div className="w-full mt-6 flex flex-col gap-6 max-w-7xl mx-auto px-4">
+         <div className="flex flex-col sm:flex-row w-full justify-between items-start sm:items-center gap-4">
+            <div>
+               <h1 className="text-3xl font-bold">{t("pageTitle")}</h1>
+               <p className="text-muted-foreground text-sm">
+                  {t("pageDescription")}
+               </p>
             </div>
             <RecipeCreateForm>
-               <Button>{t('addRecipe')}</Button>
+               <Button className="flex items-center gap-2">
+                  <PlusIcon className="w-4 h-4" />
+                  {t("createDish")}
+               </Button>
             </RecipeCreateForm>
          </div>
+
+         {/* Tabs for Recent / Archive / All */}
+         <div className="flex items-center gap-2 border-b pb-2">
+            <Button
+               variant={statusTab === "RECENT" ? "default" : "outline"}
+               size="sm"
+               onClick={() => setStatusTab("RECENT")}
+               className="rounded-full">
+               {t("tabRecent", { count: recentCount })}
+            </Button>
+            <Button
+               variant={statusTab === "ARCHIVED" ? "default" : "outline"}
+               size="sm"
+               onClick={() => setStatusTab("ARCHIVED")}
+               className="rounded-full">
+               {t("tabArchived", { count: archiveCount })}
+            </Button>
+            <Button
+               variant={statusTab === "ALL" ? "default" : "outline"}
+               size="sm"
+               onClick={() => setStatusTab("ALL")}
+               className="rounded-full">
+               {t("tabAll", { count: recentCount + archiveCount })}
+            </Button>
+         </div>
+
          <NutritionFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -72,36 +105,13 @@ function RecipesPageContent() {
                fat: { max: 150 },
             }}
          />
+
          <RecipesTables
             searchTerm={searchTerm}
+            statusFilter={statusTab}
             filters={filters}
             ingredients={ingredientsParam}
          />
       </div>
-   );
-}
-
-function RecipesPageLoading() {
-   const t = useTranslations('recipes');
-   return (
-      <div className="w-full mt-10 flex flex-col gap-8">
-         <div className="flex flex-col md:flex-row w-full justify-between items-center">
-            <div className="flex flex-col gap-2">
-               <h1 className="text-3xl font-bold">{t('title')}</h1>
-               <h3 className="text-muted-foreground text-lg font-normal">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{t('loading')}</span>
-               </h3>
-            </div>
-         </div>
-      </div>
-   );
-}
-
-export default function RecipesPageClient() {
-   return (
-      <Suspense fallback={<RecipesPageLoading />}>
-         <RecipesPageContent />
-      </Suspense>
    );
 }

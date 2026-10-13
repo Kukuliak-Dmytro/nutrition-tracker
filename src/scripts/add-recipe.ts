@@ -87,9 +87,10 @@ async function importRecipes() {
         data: {
           name: recipe.name,
           description: recipe.description,
-          instructions: recipe.instructions,
           servings: recipe.servings,
           cookingTime: recipe.cookingTime,
+          cookedWeightGrams: finalIngredients.reduce((s, i) => s + i.quantityGrams, 0),
+          status: "RECENT",
           ingredients: {
             create: finalIngredients,
           },

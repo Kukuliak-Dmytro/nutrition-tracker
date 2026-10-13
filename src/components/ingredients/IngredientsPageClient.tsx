@@ -5,6 +5,8 @@ import { IngredientCreateForm } from "../forms/IngredientCreateForm";
 import { Button } from "../ui/button";
 import IngredientsContentClient from "./IngredientsContentClient";
 
+import { useTranslations } from "next-intl";
+
 function IngredientsLoading() {
    return (
       <div className="w-full flex items-center justify-center py-12">
@@ -14,14 +16,17 @@ function IngredientsLoading() {
 }
 
 export default function IngredientsPageClient() {
+   const t = useTranslations("ingredients");
+
    return (
       <div className="w-full mt-10 flex flex-col gap-8">
-         <div className="flex flex-col md:flex-row w-full justify-between items-center">
+         <div className="flex flex-col md:flex-row w-full justify-between items-center gap-4">
             <div className="flex flex-col gap-2">
-               <h1 className="text-3xl font-bold">Ingredients</h1>
+               <h1 className="text-3xl font-bold">{t("pageTitle")}</h1>
+               <p className="text-sm text-muted-foreground">{t("pageDescription")}</p>
             </div>
             <IngredientCreateForm>
-               <Button>Add Ingredient</Button>
+               <Button>{t("addIngredient")}</Button>
             </IngredientCreateForm>
          </div>
          <Suspense fallback={<IngredientsLoading />}>

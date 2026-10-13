@@ -14,6 +14,7 @@
     "predev": "npm run setup:db",
     "import-ingredients": "npx ts-node --project tsconfig.scripts.json src/scripts/import-ingredients.ts",
     "import-recipes": "npx ts-node --project tsconfig.scripts.json src/scripts/add-recipe.ts",
+    "import-planck": "npx ts-node --project tsconfig.scripts.json scripts/import-planck-data.ts",
     "import-all": "npm run import-ingredients && npm run import-recipes",
     "seed:db": "npm run import-all",
     "validate-data": "npx ts-node --project tsconfig.scripts.json src/scripts/validate-data.ts",

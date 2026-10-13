@@ -37,6 +37,7 @@ export function IngredientCreateForm({ children }: { children: React.ReactNode }
       proteinPer100g: 0 as number,    
       carbsPer100g: 0 as number,
       fatPer100g: 0 as number,
+      fiberPer100g: 0 as number,
       category: "",
     },
   });
@@ -124,6 +125,17 @@ export function IngredientCreateForm({ children }: { children: React.ReactNode }
               placeholder={t('fatPlaceholder')}
             />
             {errors.fatPer100g && <p className="text-red-500">{errors.fatPer100g.message}</p>}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="fiberPer100g">{t('fiberPer100g')}</Label>
+            <Input
+              type="number"
+              step="0.10"
+              id="fiberPer100g"
+              {...register("fiberPer100g")}
+              placeholder={t('fiberPlaceholder')}
+            />
+            {errors.fiberPer100g && <p className="text-red-500">{errors.fiberPer100g.message}</p>}
           </div>
           <div className="flex justify-start gap-2 mt-4">
             <Button type="submit">{t('createIngredient')}</Button>

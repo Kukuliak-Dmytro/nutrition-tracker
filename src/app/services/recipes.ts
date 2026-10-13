@@ -101,4 +101,19 @@ export const toggleFavorite = async (
     }
     throw new Error(getErrorMessage(error));
   }
-}
+};
+
+export const toggleRecipeStatus = async (
+  id: string,
+  status: "RECENT" | "ARCHIVED"
+): Promise<RecipeResponse> => {
+  try {
+    const response = await http.patch(`/recipes/${id}`, { status });
+    return RecipeResponseSchema.parse(response.data);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new Error("Invalid recipe data: " + error.message);
+    }
+    throw new Error(getErrorMessage(error));
+  }
+};

@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "./button"
 import { AlertCircle } from "lucide-react"
 
@@ -48,18 +49,21 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 function DefaultErrorFallback({ error, resetError }: ErrorFallbackProps) {
+    const tCommon = useTranslations("common")
+    const tErrors = useTranslations("errors")
+
     return (
         <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
             <div className="flex flex-col items-center gap-4 text-center max-w-md">
                 <AlertCircle className="w-16 h-16 text-destructive" />
                 <div>
-                    <h2 className="text-2xl font-semibold mb-2">Something went wrong</h2>
+                    <h2 className="text-2xl font-semibold mb-2">{tErrors("somethingWentWrong")}</h2>
                     <p className="text-muted-foreground mb-4">
-                        {error.message || "An unexpected error occurred"}
+                        {error.message || tErrors("unexpectedError")}
                     </p>
                 </div>
                 <Button onClick={resetError} variant="default">
-                    Try Again
+                    {tCommon("retry")}
                 </Button>
             </div>
         </div>

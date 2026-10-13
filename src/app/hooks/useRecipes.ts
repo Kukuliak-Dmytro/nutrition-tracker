@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient, queryOptions } from "@tanstack/r
 import {
    RecipeQuery,
    UpdateRecipe,
-   GenerateRecipe,
 } from "../../../utils/schemas/recipe";
 import {
    createRecipe,
@@ -11,8 +10,8 @@ import {
    updateRecipe,
    deleteRecipe,
    toggleFavorite,
+   toggleRecipeStatus,
 } from "@/app/services/recipes";
-import { generateRecipeContent } from "@/app/services/recipe-ai";
 import { toast } from "sonner";
 
 export const recipesQueryOptions = (filters: Partial<RecipeQuery> = {}) => {
@@ -103,9 +102,18 @@ export const useToggleFavorite = () => {
    });
 };
 
-export const useGenerateRecipeContent = () => {
+export const useToggleRecipeStatus = () => {
+   const queryClient = useQueryClient();
    return useMutation({
-      mutationKey: ["generateRecipeContent"],
-      mutationFn: (payload: GenerateRecipe) => generateRecipeContent(payload),
-   })
-}
+      mutationKey: ["toggleRecipeStatus"],
+      mutationFn: ({ id, status }: { id: string; status: "RECENT" | "ARCHIVED" }) =>
+         toggleRecipeStatus(id, status),
+      onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ["recipes"] });
+         queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      },
+      onError: (error) => {
+         toast.error(error instanceof Error ? error.message : "Failed to update status");
+      },
+   });
+};

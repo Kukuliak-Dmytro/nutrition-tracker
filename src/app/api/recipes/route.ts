@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
 
       const search = queryParams.search?.trim();
       const where = {
+         ...(queryParams.status ? { status: queryParams.status } : {}),
          ...(search
             ? {
                  OR: [
@@ -53,15 +54,23 @@ export async function GET(req: NextRequest) {
 
       const sortBy = searchParams.get("sortBy");
       const sortOrder =
-         (searchParams.get("sortOrder") as "asc" | "desc") || "asc";
+         (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
-      // Valid Prisma fields for Recipe model (excluding computed fields)
-      const validPrismaFields = ["name", "description", "instructions", "servings", "cookingTime", "rating", "isFavorite", "createdAt", "updatedAt"];
+      const validPrismaFields = [
+         "name",
+         "description",
+         "servings",
+         "cookingTime",
+         "cookedWeightGrams",
+         "status",
+         "rating",
+         "isFavorite",
+         "createdAt",
+         "updatedAt",
+      ];
       
       let orderBy: { [key: string]: "asc" | "desc" } | undefined = undefined;
 
-      // Only use orderBy for Prisma if it's a valid database field
-      // Computed fields (calories, carbs, protein, fat) will be sorted after fetching
       if (sortBy && validPrismaFields.includes(sortBy)) {
          orderBy = { [sortBy]: sortOrder };
       }
@@ -80,6 +89,7 @@ export async function GET(req: NextRequest) {
                            proteinPer100g: true,
                            carbsPer100g: true,
                            fatPer100g: true,
+                           fiberPer100g: true,
                            category: true,
                         },
                      },
@@ -89,7 +99,7 @@ export async function GET(req: NextRequest) {
             orderBy: orderBy
                ? orderBy
                : {
-                    isFavorite: "desc",
+                    createdAt: "desc",
                  },
          })
       );
@@ -153,10 +163,23 @@ export async function GET(req: NextRequest) {
             return false;
          }
 
+         if (
+            queryParams.minFiber !== undefined &&
+            nutrition.fiber < queryParams.minFiber
+         ) {
+            return false;
+         }
+         if (
+            queryParams.maxFiber !== undefined &&
+            nutrition.fiber > queryParams.maxFiber
+         ) {
+            return false;
+         }
+
          return true;
       });
 
-      if (sortBy && ["calories", "carbs", "protein", "fat"].includes(sortBy)) {
+      if (sortBy && ["calories", "carbs", "protein", "fat", "fiber"].includes(sortBy)) {
          recipes.sort((a: (typeof recipes)[0], b: (typeof recipes)[0]) => {
             const nutritionA = calculateRecipeNutritionData(a);
             const nutritionB = calculateRecipeNutritionData(b);
@@ -166,22 +189,8 @@ export async function GET(req: NextRequest) {
                ? Number(valueA) - Number(valueB)
                : Number(valueB) - Number(valueA);
          });
-      } else if (sortBy) {
-         recipes.sort((a: (typeof recipes)[0], b: (typeof recipes)[0]) => {
-            const valueA = a[sortBy as keyof typeof a];
-            const valueB = b[sortBy as keyof typeof b];
-
-            if (valueA == null && valueB == null) return 0;
-            if (valueA == null) return sortOrder === "asc" ? 1 : -1;
-            if (valueB == null) return sortOrder === "asc" ? -1 : 1;
-
-            if (sortOrder === "asc") {
-               return valueA > valueB ? 1 : -1;
-            } else {
-               return valueA < valueB ? 1 : -1;
-            }
-         });
       }
+
       return NextResponse.json({
          data: recipes,
          totalRecipes,
@@ -189,7 +198,6 @@ export async function GET(req: NextRequest) {
    } catch (error) {
       console.error("Error fetching recipes:", error);
       
-      // Check if it's a connection error
       const isConnectionError = 
          (error instanceof PrismaClientKnownRequestError && error.code === 'P1001') ||
          (error instanceof Error && error.message.includes("Can't reach database server"));
@@ -214,8 +222,10 @@ export async function POST(req: NextRequest) {
          data: {
             name: validatedData.name,
             description: validatedData.description,
-            instructions: validatedData.instructions,
             servings: validatedData.servings,
+            cookingTime: validatedData.cookingTime,
+            cookedWeightGrams: validatedData.cookedWeightGrams,
+            status: validatedData.status || "RECENT",
             rating: validatedData.rating,
             isFavorite: validatedData.isFavorite,
             ingredients: {
@@ -236,6 +246,7 @@ export async function POST(req: NextRequest) {
                         proteinPer100g: true,
                         carbsPer100g: true,
                         fatPer100g: true,
+                        fiberPer100g: true,
                         category: true,
                      },
                   },
@@ -255,7 +266,6 @@ export async function POST(req: NextRequest) {
       }
       console.error("Failed to create recipe:", error);
       
-      // Check if it's a connection error
       const isConnectionError = 
          (error instanceof PrismaClientKnownRequestError && error.code === 'P1001') ||
          (error instanceof Error && error.message.includes("Can't reach database server"));

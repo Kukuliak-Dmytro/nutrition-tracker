@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
         proteinPer100g: validatedData.proteinPer100g,
         carbsPer100g: validatedData.carbsPer100g,
         fatPer100g: validatedData.fatPer100g,
+        fiberPer100g: validatedData.fiberPer100g || 0,
         category: validatedData.category,
         isCustom: true,
       },

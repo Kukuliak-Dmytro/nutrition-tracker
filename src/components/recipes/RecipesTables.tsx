@@ -9,23 +9,24 @@ import {
    TableHeader,
    TableRow,
 } from "../ui/table";
-import { calculateRecipeNutritionData } from "../../../utils/calculations/nutrition";
-import { RecipeResponse } from "../../../utils/schemas/recipe";
-import { useRecipes, useToggleFavorite } from "@/app/hooks/useRecipes";
-import { Eye, Heart, Loader2, Pencil, Trash2, ChefHat } from "lucide-react";
+import {
+   calculateRecipeNutritionData,
+   calculateCookedNutritionPer100g,
+} from "../../../utils/calculations/nutrition";
+import { RecipeResponse, RecipeStatus } from "../../../utils/schemas/recipe";
+import { useRecipes, useToggleRecipeStatus } from "@/app/hooks/useRecipes";
+import { Loader2, Pencil, Trash2, ChefHat, Archive, CheckCircle2 } from "lucide-react";
 import { Button } from "../ui/button";
 import RecipeDelete from "@/components/forms/RecipeDelete";
 import { Link } from "@/i18n/routing";
-type SortableField =
-   | "name"
-   | "calories"
-   | "carbs"
-   | "protein"
-   | "fat"
-   | "rating";
+import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+
+type SortableField = "name" | "cookedWeightGrams";
 
 interface RecipesTablesProps {
    searchTerm: string;
+   statusFilter?: RecipeStatus | "ALL";
    filters: {
       calories: { min: number; max: number };
       protein: { min: number; max: number };
@@ -35,7 +36,15 @@ interface RecipesTablesProps {
    ingredients: string | null;
 }
 
-export default function RecipesTables({ searchTerm, filters, ingredients }: RecipesTablesProps) {
+export default function RecipesTables({
+   searchTerm,
+   statusFilter,
+   filters,
+   ingredients,
+}: RecipesTablesProps) {
+   const t = useTranslations("recipes");
+   const tMeals = useTranslations("meals");
+   const tToast = useTranslations("toast");
    const [sortState, setSortState] = useState<
       | {
            field: SortableField;
@@ -43,13 +52,12 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
         }
       | undefined
    >(undefined);
-   const {
-      data,
-      isLoading,
-      isError,
-      refetch,
-   } = useRecipes({
+
+   const status = statusFilter && statusFilter !== "ALL" ? statusFilter : undefined;
+
+   const { data, isLoading, isError, refetch } = useRecipes({
       search: searchTerm,
+      status: status,
       sortBy: sortState?.field,
       sortOrder: sortState?.order,
       minCalories: filters.calories.min !== 0 ? filters.calories.min : undefined,
@@ -64,10 +72,8 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
    });
 
    const recipes = data?.recipes || [];
-   const { mutate: toggleFavorite } = useToggleFavorite();
-   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(
-      null
-   );
+   const { mutate: toggleStatus } = useToggleRecipeStatus();
+   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
 
    const handleSort = (field: SortableField) => {
       setSortState((prev) => {
@@ -81,19 +87,28 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
       });
    };
 
-
-   const handleToggleFavorite = (id: string, currentFavorite: boolean) => {
-      toggleFavorite({ id, isFavorite: !currentFavorite });
+   const handleToggleStatus = (recipe: RecipeResponse) => {
+      const nextStatus = recipe.status === "RECENT" ? "ARCHIVED" : "RECENT";
+      toggleStatus(
+         { id: recipe.id, status: nextStatus },
+         {
+            onSuccess: () => {
+               toast.success(
+                  nextStatus === "ARCHIVED"
+                     ? tToast("recipeArchived", { name: recipe.name })
+                     : tToast("recipeRestored", { name: recipe.name })
+               );
+            },
+         }
+      );
    };
 
    if (isLoading) {
       return (
-         <div className="flex justify-center items-center h-80 border border-border rounded-xl bg-white dark:bg-gray-950 shadow-sm">
+         <div className="flex justify-center items-center h-80 border border-border rounded-xl bg-card shadow-sm">
             <div className="flex flex-col items-center gap-4">
                <Loader2 className="w-12 h-12 animate-spin text-primary" />
-               <p className="text-base text-muted-foreground">
-                  Loading recipes...
-               </p>
+               <p className="text-base text-muted-foreground">{t("loadingDishes")}</p>
             </div>
          </div>
       );
@@ -101,36 +116,26 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
 
    if (isError) {
       return (
-         <div className="flex justify-center items-center h-80 border border-border rounded-xl bg-white dark:bg-gray-950 shadow-sm">
-            <div className="text-center flex flex-col gap-4">
+         <div className="flex justify-center items-center h-80 border border-border rounded-xl bg-card shadow-sm">
+            <div className="flex flex-col items-center gap-4">
                <p className="text-lg font-semibold text-red-600 dark:text-red-400">
-                  Error loading recipes
+                  {t("errorLoadingDishes")}
                </p>
-               <p className="text-base text-muted-foreground">
-                  Please try again later
-               </p>
-               <Button
-                  onClick={() => refetch()}
-                  variant="outline"
-                  size="sm"
-               >
-                  Retry
+               <Button onClick={() => refetch()} variant="outline">
+                  {t("tryAgain")}
                </Button>
             </div>
          </div>
       );
    }
 
-   if (!recipes || recipes.length === 0) {
+   if (recipes.length === 0) {
       return (
-         <div className="flex justify-center items-center h-80 border border-border rounded-xl bg-white dark:bg-gray-950 shadow-sm">
-            <div className="text-center flex flex-col items-center gap-3">
-               <ChefHat size={48} className="text-muted-foreground" />
-               <p className="text-lg font-semibold text-muted-foreground">
-                  No recipes found
-               </p>
-               <p className="text-base text-muted-foreground">
-                  Create your first recipe to get started
+         <div className="flex justify-center items-center h-80 border border-border rounded-xl bg-card shadow-sm">
+            <div className="flex flex-col items-center gap-3">
+               <ChefHat className="text-muted-foreground" size={48} />
+               <p className="text-lg font-medium text-muted-foreground">
+                  {t("noDishesFound")}
                </p>
             </div>
          </div>
@@ -138,157 +143,150 @@ export default function RecipesTables({ searchTerm, filters, ingredients }: Reci
    }
 
    return (
-      <div className="border border-border rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-950">
+      <div className="border border-border rounded-xl overflow-x-auto shadow-sm bg-card">
          <Table>
             <TableHeader>
-               <TableRow className="bg-gray-50/80 dark:bg-gray-900/50 hover:bg-gray-50/80 dark:hover:bg-gray-900/50 border-b-2 border-gray-200 dark:border-gray-800 h-16">
+               <TableRow className="border-b">
                   <SortableHeader
                      field="name"
                      sortState={sortState}
                      onSort={handleSort}>
-                     Name
+                     {t("dishName")}
                   </SortableHeader>
-                  <SortableHeader
-                     field="calories"
-                     sortState={sortState}
-                     onSort={handleSort}>
-                     Calories
-                  </SortableHeader>
-                  <SortableHeader
-                     field="protein"
-                     sortState={sortState}
-                     onSort={handleSort}>
-                     Protein
-                  </SortableHeader>
-                  <SortableHeader
-                     field="carbs"
-                     sortState={sortState}
-                     onSort={handleSort}>
-                     Carbs
-                  </SortableHeader>
-                  <SortableHeader
-                     field="fat"
-                     sortState={sortState}
-                     onSort={handleSort}>
-                     Fat
-                  </SortableHeader>
-                  <SortableHeader
-                     field="rating"
-                     sortState={sortState}
-                     onSort={handleSort}>
-                     Rating
-                  </SortableHeader>
-                  <TableHead className="text-lg font-semibold text-center">
-                     Favorite
-                  </TableHead>
-                  <TableHead className="text-lg font-semibold text-right">
-                     Actions
-                  </TableHead>
+                  <TableHead className="font-semibold text-sm">{t("status")}</TableHead>
+                  <TableHead className="font-semibold text-sm">{t("cookedWeight")}</TableHead>
+                  <TableHead className="font-semibold text-sm text-center">{t("calPer100g")}</TableHead>
+                  <TableHead className="font-semibold text-sm text-center">{t("proteinPer100g")}</TableHead>
+                  <TableHead className="font-semibold text-sm text-center">{t("fatPer100g")}</TableHead>
+                  <TableHead className="font-semibold text-sm text-center">{t("carbsPer100g")}</TableHead>
+                  <TableHead className="font-semibold text-sm text-center">{t("fiberPer100g")}</TableHead>
+                  <TableHead className="font-semibold text-sm text-right pr-6">{t("actions")}</TableHead>
                </TableRow>
             </TableHeader>
             <TableBody>
                {recipes.map((recipe: RecipeResponse) => {
-                  const recipeNutritionData =
-                     calculateRecipeNutritionData(recipe);
+                  const totalNutrition = calculateRecipeNutritionData(recipe);
+                  const totalRawWeight = (recipe.ingredients || []).reduce(
+                     (sum, i) => sum + Number(i.quantityGrams),
+                     0
+                  );
+                  const cookedWeight = recipe.cookedWeightGrams
+                     ? Number(recipe.cookedWeightGrams)
+                     : totalRawWeight;
+
+                  const per100g = cookedWeight > 0
+                     ? calculateCookedNutritionPer100g(totalNutrition, cookedWeight)
+                     : totalNutrition;
+
+                  const isRecent = recipe.status === "RECENT";
+
                   return (
                      <TableRow
                         key={recipe.id}
-                        className="hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors">
-                        <TableCell className="py-8 max-w-xs">
+                        className="hover:bg-muted/30 transition-colors">
+                        <TableCell className="py-4 max-w-xs">
                            <Link
                               href={`/recipes/${recipe.id}`}
-                              prefetch={true}
-                              className="flex flex-col gap-1.5 hover:opacity-80 transition-opacity">
-                              <span className="text-xl font-semibold text-foreground truncate">
+                              className="flex flex-col gap-0.5 hover:opacity-80 transition-opacity">
+                              <span className="font-semibold text-foreground truncate">
                                  {recipe.name}
                               </span>
                               {recipe.description && (
-                                 <span className="text-base text-muted-foreground line-clamp-2 leading-relaxed">
+                                 <span className="text-xs text-muted-foreground line-clamp-1">
                                     {recipe.description}
                                  </span>
                               )}
                            </Link>
                         </TableCell>
-                        <TableCell className="py-8">
-                           <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-base">
-                              {Number(recipeNutritionData.calories).toFixed(1)}
-                              kcal
+
+                        <TableCell className="py-4">
+                           <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                 isRecent
+                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                    : "bg-muted text-muted-foreground"
+                              }`}>
+                              {isRecent ? t("statusRecent") : t("statusArchived")}
                            </span>
                         </TableCell>
-                        <TableCell className="py-8">
-                           <span className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 font-semibold text-base">
-                              {Number(recipeNutritionData.protein).toFixed(1)}g
+
+                        <TableCell className="py-4 font-medium text-sm">
+                           {recipe.cookedWeightGrams ? `${recipe.cookedWeightGrams} ${tMeals("grams")}` : t("rawWeightLabel", { weight: totalRawWeight })}
+                        </TableCell>
+
+                        <TableCell className="py-4 text-center">
+                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-xs">
+                              {Number(per100g.calories).toFixed(1)} {tMeals("kcal")}
                            </span>
                         </TableCell>
-                        <TableCell className="py-8">
-                           <span className="inline-flex items-center px-4 py-2 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 font-semibold text-base">
-                              {Number(recipeNutritionData.carbs).toFixed(1)}g
+
+                        <TableCell className="py-4 text-center">
+                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 font-semibold text-xs">
+                              {Number(per100g.protein).toFixed(1)}{tMeals("grams")}
                            </span>
                         </TableCell>
-                        <TableCell className="py-8">
-                           <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-base">
-                              {Number(recipeNutritionData.fat).toFixed(1)}g
+
+                        <TableCell className="py-4 text-center">
+                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-semibold text-xs">
+                              {Number(per100g.fat).toFixed(1)}{tMeals("grams")}
                            </span>
                         </TableCell>
-                        <TableCell className="py-8">
-                           <span className="text-xl font-medium text-muted-foreground">
-                              {recipe.rating ? `${recipe.rating}/100` : "—"}
+
+                        <TableCell className="py-4 text-center">
+                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 font-semibold text-xs">
+                              {Number(per100g.carbs).toFixed(1)}{tMeals("grams")}
                            </span>
                         </TableCell>
-                        <TableCell className="text-center py-8">
-                           <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                 handleToggleFavorite(
-                                    recipe.id,
-                                    recipe.isFavorite || false
-                                 )
-                              }
-                              className="h-12 w-12 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
-                              <Heart
-                                 className={`size-6 transition-all ${
-                                    recipe.isFavorite
-                                       ? "fill-current text-red-500 scale-110"
-                                       : "text-gray-400 hover:text-red-400"
-                                 }`}
-                              />
-                           </Button>
+
+                        <TableCell className="py-4 text-center">
+                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 font-semibold text-xs">
+                              {Number(per100g.fiber).toFixed(1)}{tMeals("grams")}
+                           </span>
                         </TableCell>
-                        <TableCell className="py-8">
-                           <div className="flex items-center justify-end gap-2">
+
+                        <TableCell className="py-4 text-right pr-4">
+                           <div className="flex items-center justify-end gap-1">
+                              <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 title={isRecent ? t("toArchiveFull") : t("activateFull")}
+                                 onClick={() => handleToggleStatus(recipe)}
+                                 className="h-8 px-2 text-xs flex items-center gap-1">
+                                 {isRecent ? (
+                                    <>
+                                       <Archive className="w-3.5 h-3.5" />
+                                       {t("toArchiveBtn")}
+                                    </>
+                                 ) : (
+                                    <>
+                                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                       {t("activateBtn")}
+                                    </>
+                                 )}
+                              </Button>
+
                               <RecipeUpdateForm
                                  recipe={recipe}
                                  isOpen={selectedRecipeId === recipe.id}
                                  onOpenChange={(open) => {
-                                    setSelectedRecipeId(
-                                       open ? recipe.id : null
-                                    );
-                                 }}
-                              >
+                                    setSelectedRecipeId(open ? recipe.id : null);
+                                 }}>
                                  <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-12 w-12 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:text-orange-600 dark:hover:text-orange-400 transition-colors">
-                                    <Pencil className="w-5 h-5" />
+                                    className="h-8 w-8 hover:text-primary">
+                                    <Pencil className="w-4 h-4" />
                                  </Button>
                               </RecipeUpdateForm>
+
                               <RecipeDelete recipe={recipe}>
                                  <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-12 w-12 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                                    <Trash2 className="w-5 h-5" />
+                                    className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                                    <Trash2 className="w-4 h-4" />
                                  </Button>
                               </RecipeDelete>
-                              <Link href={`/recipes/${recipe.id}`} prefetch={true}>
-                                 <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-12 w-12 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
-                                    <Eye className="w-5 h-5" />
-                                 </Button>
-                              </Link>
                            </div>
                         </TableCell>
                      </TableRow>

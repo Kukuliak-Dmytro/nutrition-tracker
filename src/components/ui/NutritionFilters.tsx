@@ -7,6 +7,7 @@ import { Slider } from "./slider";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
+import { useTranslations } from "next-intl";
 
 interface NutritionFiltersProps {
   fatMin: number;
@@ -56,6 +57,8 @@ export function NutritionFilters({
     fat: { max: 100 },
   },
 }: NutritionFiltersProps) {
+  const t = useTranslations("filters");
+  const tMeals = useTranslations("meals");
   const [isCaloriesOpen, setIsCaloriesOpen] = useState(false);
   const [isProteinOpen, setIsProteinOpen] = useState(false);
   const [isCarbsOpen, setIsCarbsOpen] = useState(false);
@@ -117,10 +120,10 @@ export function NutritionFilters({
                   "bg-accent border-solid"
               )}
             >
-              <span className="font-medium text-sm">Protein</span>
+              <span className="font-medium text-sm">{t("protein")}</span>
               {(proteinMin !== 0 || proteinMax !== limits.protein.max) && (
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {proteinMin}-{proteinMax}g
+                  {proteinMin}-{proteinMax}{tMeals("grams")}
                 </span>
               )}
               <ChevronDown className="ml-2 h-3 w-3 opacity-70" />
@@ -129,13 +132,13 @@ export function NutritionFilters({
           <PopoverContent className="w-80 p-4" align="start">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm">Protein (g)</h4>
+                <h4 className="font-medium text-sm">{t("proteinGrams")}</h4>
               </div>
               <div className="space-y-4">
                 <div className="flex gap-2 items-center">
                   <div className="flex-1">
                     <label className="text-xs text-muted-foreground mb-1 block">
-                      Min
+                      {t("min")}
                     </label>
                     <Input
                       type="number"
@@ -151,7 +154,7 @@ export function NutritionFilters({
                   <span className="text-muted-foreground mt-5">-</span>
                   <div className="flex-1">
                     <label className="text-xs text-muted-foreground mb-1 block">
-                      Max
+                      {t("max")}
                     </label>
                     <Input
                       type="number"
@@ -177,8 +180,8 @@ export function NutritionFilters({
                     className="w-full"
                   />
                   <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>0g</span>
-                    <span>{limits.protein.max}g</span>
+                    <span>0{tMeals("grams")}</span>
+                    <span>{limits.protein.max}{tMeals("grams")}</span>
                   </div>
                 </div>
               </div>
@@ -197,10 +200,10 @@ export function NutritionFilters({
                   "bg-accent border-solid"
               )}
             >
-              <span className="font-medium text-sm">Calories</span>
+              <span className="font-medium text-sm">{t("calories")}</span>
               {(caloriesMin !== 0 || caloriesMax !== limits.calories.max) && (
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {caloriesMin}-{caloriesMax}kcal
+                  {caloriesMin}-{caloriesMax}{tMeals("kcal")}
                 </span>
               )}
               <ChevronDown className="ml-2 h-3 w-3 opacity-70" />
@@ -209,12 +212,12 @@ export function NutritionFilters({
           <PopoverContent className="w-80 p-4" align="start">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm">Calories (kcal)</h4>
+                <h4 className="font-medium text-sm">{t("caloriesKcal")}</h4>
               </div>
               <div className="space-y-4">
                 <div className="flex gap-2 items-center">
                   <div className="flex-1">
-                    <label className="text-xs text-muted-foreground">Min</label>
+                    <label className="text-xs text-muted-foreground">{t("min")}</label>
                     <Input
                       type="number"
                       value={caloriesMin}
@@ -228,7 +231,7 @@ export function NutritionFilters({
                   </div>
                   <span className="text-muted-foreground mt-5">-</span>
                   <div className="flex-1">
-                    <label className="text-xs text-muted-foreground">Max</label>
+                    <label className="text-xs text-muted-foreground">{t("max")}</label>
                     <Input
                       type="number"
                       value={caloriesMax}
@@ -253,8 +256,8 @@ export function NutritionFilters({
                     className="w-full"
                   />
                   <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>0kcal</span>
-                    <span>{limits.calories.max}kcal</span>
+                    <span>0{tMeals("kcal")}</span>
+                    <span>{limits.calories.max}{tMeals("kcal")}</span>
                   </div>
                 </div>
               </div>
@@ -272,10 +275,10 @@ export function NutritionFilters({
                 (carbsMin !== 0 || carbsMax !== limits.carbs.max) && "bg-accent border-solid"
               )}
             >
-              <span className="font-medium text-sm">Carbs</span>
+              <span className="font-medium text-sm">{t("carbs")}</span>
               {(carbsMin !== 0 || carbsMax !== limits.carbs.max) && (
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {carbsMin}-{carbsMax}g
+                  {carbsMin}-{carbsMax}{tMeals("grams")}
                 </span>
               )}
               <ChevronDown className="ml-2 h-3 w-3 opacity-70" />
@@ -284,12 +287,12 @@ export function NutritionFilters({
           <PopoverContent className="w-80 p-4" align="start">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm">Carbs (g)</h4>
+                <h4 className="font-medium text-sm">{t("carbsGrams")}</h4>
               </div>
               <div className="space-y-4">
                 <div className="flex gap-2 items-center">
                   <div className="flex-1">
-                    <label className="text-xs text-muted-foreground">Min</label>
+                    <label className="text-xs text-muted-foreground">{t("min")}</label>
                     <Input
                       type="number"
                       value={carbsMin}
@@ -304,7 +307,7 @@ export function NutritionFilters({
                   <span className="text-muted-foreground mt-5">-</span>
                   <div className="flex-1">
                     <label className="text-xs text-muted-foreground mb-1 block">
-                      Max
+                      {t("max")}
                     </label>
                     <Input
                       type="number"
@@ -330,8 +333,8 @@ export function NutritionFilters({
                     className="w-full"
                   />
                   <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>0g</span>
-                    <span>{limits.carbs.max}g</span>
+                    <span>0{tMeals("grams")}</span>
+                    <span>{limits.carbs.max}{tMeals("grams")}</span>
                   </div>
                 </div>
               </div>
@@ -349,10 +352,10 @@ export function NutritionFilters({
                 (fatMin !== 0 || fatMax !== limits.fat.max) && "bg-accent border-solid"
               )}
             >
-              <span className="font-medium text-sm">Fat</span>
+              <span className="font-medium text-sm">{t("fat")}</span>
               {(fatMin !== 0 || fatMax !== limits.fat.max) && (
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {fatMin}-{fatMax}g
+                  {fatMin}-{fatMax}{tMeals("grams")}
                 </span>
               )}
               <ChevronDown className="ml-2 h-3 w-3 opacity-70" />
@@ -361,13 +364,13 @@ export function NutritionFilters({
           <PopoverContent className="w-80 p-4" align="start">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium text-sm">Fat (g)</h4>
+                <h4 className="font-medium text-sm">{t("fatGrams")}</h4>
               </div>
               <div className="space-y-4">
                 <div className="flex gap-2 items-center">
                   <div className="flex-1">
                     <label className="text-xs text-muted-foreground mb-1 block">
-                      Min
+                      {t("min")}
                     </label>
                     <Input
                       type="number"
@@ -383,7 +386,7 @@ export function NutritionFilters({
                   <span className="text-muted-foreground mt-5">-</span>
                   <div className="flex-1">
                     <label className="text-xs text-muted-foreground mb-1 block">
-                      Max
+                      {t("max")}
                     </label>
                     <Input
                       type="number"
@@ -409,8 +412,8 @@ export function NutritionFilters({
                     className="w-full"
                   />
                   <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>0g</span>
-                    <span>{limits.fat.max}g</span>
+                    <span>0{tMeals("grams")}</span>
+                    <span>{limits.fat.max}{tMeals("grams")}</span>
                   </div>
                 </div>
               </div>
@@ -424,7 +427,7 @@ export function NutritionFilters({
           onClick={clearFilters}
         >
           <X className="h-3 w-3 mr-1" />
-          Clear Filters
+          {t("clearFilters")}
         </Button>
       </div>
 
@@ -435,7 +438,7 @@ export function NutritionFilters({
         />
         <Input
           className="bg-input-background px-4 py-2 pl-10 h-12 placeholder:text-[#8c6e5f]"
-          placeholder={`Search ${pathname.split("/").pop()}`}
+          placeholder={t("searchByName")}
           value={inputValue}
           onChange={handleSearchChange}
         />

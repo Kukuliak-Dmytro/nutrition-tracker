@@ -59,13 +59,13 @@ export default async function LocaleLayout({
             disableTransitionOnChange
           >
             <ErrorBoundary>
-              <Header />
-              <div className="mx-auto w-full max-w-[2000px] px-6 pb-20 lg:px-10 flex flex-col items-center justify-center">
-                <QueryProvider>
+              <QueryProvider>
+                <Header />
+                <div className="mx-auto w-full max-w-[2000px] px-6 pb-20 lg:px-10 flex flex-col items-center justify-center">
                   {children}
-                </QueryProvider>
-              </div>
-              <Toaster />
+                </div>
+                <Toaster />
+              </QueryProvider>
             </ErrorBoundary>
           </ThemeProvider>
         </NextIntlClientProvider>

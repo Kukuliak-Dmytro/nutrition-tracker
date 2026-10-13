@@ -190,8 +190,8 @@ async function main() {
   if (!existsSync(".env")) {
     console.log("Creating .env file from template...");
     const envContent = `# Database
-DATABASE_URL="postgresql://nutrition_user:nutrition_password@localhost:5432/nutrition_tracker?schema=public"
-DIRECT_URL="postgresql://nutrition_user:nutrition_password@localhost:5432/nutrition_tracker?schema=public"
+DATABASE_URL="postgresql://nutrition_user:nutrition_password@localhost:5433/nutrition_tracker?schema=public"
+DIRECT_URL="postgresql://nutrition_user:nutrition_password@localhost:5433/nutrition_tracker?schema=public"
 
 # Supabase (optional for local development)
 NEXT_PUBLIC_SUPABASE_URL=""

@@ -26,6 +26,7 @@ export async function GET(
                         proteinPer100g: true,
                         carbsPer100g: true,
                         fatPer100g: true,
+                        fiberPer100g: true,
                         category: true,
                         isCustom: true,
                         createdAt: true,
@@ -74,12 +75,15 @@ export async function PATCH(
             ...(validatedData.description !== undefined && {
                description: validatedData.description,
             }),
-            ...(validatedData.instructions !== undefined && {
-               instructions: validatedData.instructions,
-            }),
             ...(validatedData.servings && { servings: validatedData.servings }),
             ...(validatedData.cookingTime !== undefined && {
                cookingTime: validatedData.cookingTime,
+            }),
+            ...(validatedData.cookedWeightGrams !== undefined && {
+               cookedWeightGrams: validatedData.cookedWeightGrams,
+            }),
+            ...(validatedData.status !== undefined && {
+               status: validatedData.status,
             }),
             ...(validatedData.rating !== undefined && {
                rating: validatedData.rating,
@@ -108,16 +112,14 @@ export async function PATCH(
                         proteinPer100g: true,
                         carbsPer100g: true,
                         fatPer100g: true,
+                        fiberPer100g: true,
                         category: true,
-                        isCustom: true,
-                        createdAt: true,
                      },
                   },
                },
             },
          },
       });
-
       return NextResponse.json(recipe);
    } catch (error) {
       if (error instanceof ZodError) {
@@ -141,11 +143,9 @@ export async function DELETE(
    try {
       const resolvedParams = await params;
       const { id } = GetRecipeSchema.parse(resolvedParams);
-
       const recipe = await prisma.recipe.delete({
          where: { id },
       });
-
       return NextResponse.json(recipe);
    } catch (error) {
       if (error instanceof ZodError) {
