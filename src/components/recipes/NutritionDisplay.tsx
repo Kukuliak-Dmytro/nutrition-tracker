@@ -18,36 +18,36 @@ export default function NutritionDisplay({
     const displayedNutrition = showPerServing ? calculateNutritionPerServing(nutrition, servings) : nutrition;
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 p-3 bg-muted/50 rounded-lg">
-          <div className="text-center p-2 rounded-md bg-background/60 shadow-sm">
-            <div className="text-xl font-bold text-orange-600">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 p-2 sm:p-3 bg-muted/50 rounded-xl">
+          <div className="text-center p-2 rounded-lg bg-background/80 shadow-xs border border-border/40 min-w-0">
+            <div className="text-base sm:text-xl font-bold text-orange-600 tabular-nums whitespace-nowrap">
               {Number(displayedNutrition.calories || 0).toFixed(1)}
             </div>
-            <div className="text-xs text-muted-foreground">{t('calories')} {labelPer100g && t('per100g')}</div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">{t('calories')} {labelPer100g && t('per100g')}</div>
           </div>
-          <div className="text-center p-2 rounded-md bg-background/60 shadow-sm">
-            <div className="text-xl font-bold text-blue-600">
+          <div className="text-center p-2 rounded-lg bg-background/80 shadow-xs border border-border/40 min-w-0">
+            <div className="text-base sm:text-xl font-bold text-blue-600 tabular-nums whitespace-nowrap">
               {Number(displayedNutrition.protein || 0).toFixed(1)}{t('g')}
             </div>
-            <div className="text-xs text-muted-foreground">{t('protein')}</div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">{t('protein')}</div>
           </div>
-          <div className="text-center p-2 rounded-md bg-background/60 shadow-sm">
-            <div className="text-xl font-bold text-amber-600">
+          <div className="text-center p-2 rounded-lg bg-background/80 shadow-xs border border-border/40 min-w-0">
+            <div className="text-base sm:text-xl font-bold text-amber-600 tabular-nums whitespace-nowrap">
               {Number(displayedNutrition.fat || 0).toFixed(1)}{t('g')}
             </div>
-            <div className="text-xs text-muted-foreground">{t('fat')}</div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">{t('fat')}</div>
           </div>
-          <div className="text-center p-2 rounded-md bg-background/60 shadow-sm">
-            <div className="text-xl font-bold text-emerald-600">
+          <div className="text-center p-2 rounded-lg bg-background/80 shadow-xs border border-border/40 min-w-0">
+            <div className="text-base sm:text-xl font-bold text-emerald-600 tabular-nums whitespace-nowrap">
               {Number(displayedNutrition.carbs || 0).toFixed(1)}{t('g')}
             </div>
-            <div className="text-xs text-muted-foreground">{t('carbs')}</div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">{t('carbs')}</div>
           </div>
-          <div className="text-center p-2 rounded-md bg-background/60 shadow-sm col-span-2 sm:col-span-1">
-            <div className="text-xl font-bold text-purple-600">
+          <div className="text-center p-2 rounded-lg bg-background/80 shadow-xs border border-border/40 col-span-2 sm:col-span-1 min-w-0">
+            <div className="text-base sm:text-xl font-bold text-purple-600 tabular-nums whitespace-nowrap">
               {Number(displayedNutrition.fiber || 0).toFixed(1)}{t('g')}
             </div>
-            <div className="text-xs text-muted-foreground">{t('fiber')}</div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 leading-tight">{t('fiber')}</div>
           </div>
         </div>
     )

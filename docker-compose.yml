@@ -1,26 +1,53 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: nutrition-tracker-db
+    container_name: nutrition_tracker_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: nutrition_user
-      POSTGRES_PASSWORD: nutrition_password
-      POSTGRES_DB: nutrition_tracker
+      POSTGRES_USER: ${POSTGRES_USER:-nutrition_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nutrition_password}
+      POSTGRES_DB: ${POSTGRES_DB:-nutrition_tracker}
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - nutrition_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nutrition_user -d nutrition_tracker"]
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nutrition_tracker_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+      DATABASE_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
+      DIRECT_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cals.dvkplay.com}
+    env_file:
+      - path: .env
+        required: false
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
-  postgres_data:
-
-
-
+  nutrition_postgres_data:

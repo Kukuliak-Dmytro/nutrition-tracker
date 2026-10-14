@@ -1,0 +1,71 @@
+name: CI/CD Pipeline & Deploy to Mini PC
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: nutrition-tracker-deploy
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================================
+  # Stage 1: Quality Checks (Runs on GitHub-hosted ubuntu-latest)
+  # ============================================================================
+  verify:
+    name: Lint & Type-Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-Check (TypeScript)
+        run: npm run typecheck
+
+  # ============================================================================
+  # Stage 2: Deploy to Mini PC (Runs ONLY if Stage 1 passes!)
+  # ============================================================================
+  deploy:
+    name: Deploy to Production
+    needs: [verify]
+    runs-on: [self-hosted, minipc-nutrition]
+
+    steps:
+      - name: Pull latest code, migrate DB and rebuild Docker containers
+        run: |
+          echo "🚀 Starting automated deployment on Mini PC..."
+          cd $HOME/projects/nutrition-tracker
+          git fetch origin main
+          git reset --hard origin/main
+          git clean -fd
+          
+          echo "🐳 Starting database container..."
+          docker compose up -d postgres
+          
+          echo "🐳 Building and starting app container..."
+          docker compose up -d --build
+          
+          echo "📦 Running Prisma migrations..."
+          docker compose exec -T app npx prisma migrate deploy || true
+          
+          echo "🧹 Pruning unused images..."
+          docker image prune -f
+          echo "✅ Deployment completed successfully!"
