@@ -58,7 +58,7 @@ export function AuthCard({ initialMode = "login", onSuccess }: AuthCardProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto border-border/70 shadow-lg rounded-2xl bg-card/95 backdrop-blur-sm">
+    <Card className="w-full sm:w-[420px] max-w-[420px] mx-auto border-border/70 shadow-lg rounded-2xl bg-card/95 backdrop-blur-sm">
       <CardHeader className="text-center space-y-2 pb-4">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25 mb-1">
           <Flame className="h-6 w-6 fill-current" />

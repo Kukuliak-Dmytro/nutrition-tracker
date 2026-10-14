@@ -14,7 +14,7 @@ export default function DashboardClient() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="w-full flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -22,7 +22,7 @@ export default function DashboardClient() {
 
   if (!currentUser) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[75vh] px-4 py-8 animate-in fade-in duration-300">
+      <div className="w-full flex flex-col items-center justify-center min-h-[75vh] px-4 py-8 animate-in fade-in duration-300">
         <AuthCard />
       </div>
     );
