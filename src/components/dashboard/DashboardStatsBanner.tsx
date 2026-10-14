@@ -19,6 +19,12 @@ export function DashboardStatsBanner() {
     surplusDays: 0,
   };
 
+  const goals = summaryData?.goals || {
+    calories: 2200,
+    maintenanceCalories: 2850,
+    goalType: "WEIGHT_LOSS" as const,
+  };
+
   const isDeficitPositive = stats.cumulativeMaintenanceDeficit > 0;
 
   return (
@@ -98,8 +104,8 @@ export function DashboardStatsBanner() {
             </div>
             <p className="text-xs text-muted-foreground">
               {t("goalCaloriesSummary", {
-                target: summaryData?.goals.calories || 2200,
-                maintenance: summaryData?.goals.maintenanceCalories || 2850,
+                target: goals.calories || 2200,
+                maintenance: goals.maintenanceCalories || 2850,
               })}
             </p>
           </div>
@@ -115,26 +121,26 @@ export function DashboardStatsBanner() {
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                summaryData?.goals.goalType === "MUSCLE_GAIN"
+                goals.goalType === "MUSCLE_GAIN"
                   ? "bg-purple-500/15 text-purple-600 dark:text-purple-400"
-                  : summaryData?.goals.goalType === "MAINTENANCE"
+                  : goals.goalType === "MAINTENANCE"
                   ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
                   : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
               }`}>
-                {summaryData?.goals.goalType === "MUSCLE_GAIN"
+                {goals.goalType === "MUSCLE_GAIN"
                   ? t("goalMuscleGain")
-                  : summaryData?.goals.goalType === "MAINTENANCE"
+                  : goals.goalType === "MAINTENANCE"
                   ? t("goalMaintenance")
                   : t("goalWeightLoss")}
               </span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-bold text-primary">
-                {t("statsStrategyTarget", { calories: summaryData?.goals.calories || 2200 })}
+                {t("statsStrategyTarget", { calories: goals.calories || 2200 })}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t("maintenanceShort", { maintenance: summaryData?.goals.maintenanceCalories || 2850 })}
+              {t("maintenanceShort", { maintenance: goals.maintenanceCalories || 2850 })}
             </p>
           </div>
           <div className="w-11 h-11 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
