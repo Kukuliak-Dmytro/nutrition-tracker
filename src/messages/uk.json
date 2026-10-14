@@ -439,5 +439,28 @@
   "meta": {
     "title": "NutriTrack - Трекер харчування",
     "description": "Відстежуйте свої рецепти, інгредієнти та харчування з NutriTrack"
+  },
+  "auth": {
+    "signIn": "Вхід",
+    "signUp": "Реєстрація",
+    "loginTitle": "Вхід до NutriTrack",
+    "registerTitle": "Створити акаунт",
+    "subtitle": "Увійдіть або зареєструйтесь, щоб вести щоденник харчування та зберігати свої страви",
+    "email": "Електронна пошта",
+    "emailPlaceholder": "you@example.com",
+    "password": "Пароль",
+    "passwordPlaceholder": "Мінімум 6 символів",
+    "name": "Ім'я (необов'язково)",
+    "namePlaceholder": "Як до вас звертатися?",
+    "loginBtn": "Увійти",
+    "registerBtn": "Зареєструватися",
+    "logout": "Вийти",
+    "needAccount": "Немає акаунту? Зареєструватися",
+    "haveAccount": "Вже є акаунт? Увійти",
+    "invalidCredentials": "Невірний email або пароль",
+    "userExists": "Користувач із такою поштою вже існує",
+    "errorOccurred": "Виникла помилка. Спробуйте ще раз",
+    "loggedAs": "Ви увійшли як",
+    "guestPrompt": "Увійдіть, щоб переглядати свій щоденник"
   }
 }

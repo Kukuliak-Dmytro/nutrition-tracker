@@ -5,6 +5,7 @@ import {
 } from "../../../../utils/schemas";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,6 +13,11 @@ export async function GET(req: NextRequest) {
     const queryParams = IngredientQuerySchema.parse(
       Object.fromEntries(searchParams.entries())
     );
+    const userId = await getSessionUserId();
+    const userFilter = userId
+      ? { OR: [{ userId: null }, { userId }] }
+      : { userId: null };
+
     const search = queryParams.search?.trim();
     const where = search
       ? {
@@ -23,6 +29,7 @@ export async function GET(req: NextRequest) {
       : {};
 
     const whereClause = {
+      ...userFilter,
       ...where,
       ...(queryParams.minCalories !== undefined ||
       queryParams.maxCalories !== undefined
@@ -125,10 +132,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getSessionUserId();
     const body = await req.json();
     const validatedData = CreateIngredientSchema.parse(body);
     const ingredient = await prisma.ingredient.create({
       data: {
+        userId: userId || null,
         name: validatedData.name,
         caloriesPer100g: validatedData.caloriesPer100g,
         proteinPer100g: validatedData.proteinPer100g,

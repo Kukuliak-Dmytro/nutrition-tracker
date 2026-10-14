@@ -4,12 +4,32 @@ import { DashboardStatsBanner } from "./DashboardStatsBanner";
 import { NutrientProgressCalendar } from "./NutrientProgressCalendar";
 import { NutritionGoalChart } from "./NutritionGoalChart";
 import { DailyFoodDiary } from "./DailyFoodDiary";
+import { useCurrentUser } from "@/app/hooks/useAuth";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardClient() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { data: currentUser, isLoading } = useCurrentUser();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[75vh] px-4 py-8 animate-in fade-in duration-300">
+        <AuthCard />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col w-full gap-8 my-4 max-w-7xl mx-auto px-2 sm:px-4">
+    <div className="flex flex-col w-full gap-8 my-4 max-w-7xl mx-auto px-2 sm:px-4 animate-in fade-in duration-300">
       {/* 1. Overall Tracking & Deficit Summary Banner */}
       <DashboardStatsBanner />
 

@@ -9,6 +9,7 @@ export type RecipeStatus = z.infer<typeof RecipeStatusSchema>;
 
 export const RecipeSchema = z.object({
   id: z.string().optional(),
+  userId: z.string().nullable().optional(),
   name: z.string().min(2, "Назва повинна містити щонайменше 2 символи"),
   description: z.string().nullable().optional(),
   servings: z.coerce.number().int().min(1, "Порції мають бути щонайменше 1").default(1),

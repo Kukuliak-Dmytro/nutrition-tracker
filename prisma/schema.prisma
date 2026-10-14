@@ -8,8 +8,25 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id           String         @id @default(uuid()) @db.Uuid
+  email        String         @unique
+  passwordHash String         @map("password_hash")
+  name         String?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  dailyGoal      DailyGoal?
+  recipes        Recipe[]
+  foodLogEntries FoodLogEntry[]
+  ingredients    Ingredient[]
+
+  @@map("users")
+}
+
 model Ingredient {
   id                String   @id @default(uuid()) @db.Uuid
+  userId            String?  @db.Uuid @map("user_id")
   name              String   @unique
   caloriesPer100g   Decimal  @db.Decimal(8, 2) @map("calories")
   proteinPer100g    Decimal  @db.Decimal(8, 2) @map("protein")
@@ -20,9 +37,11 @@ model Ingredient {
   isCustom          Boolean  @default(true) @map("is_custom")
   createdAt         DateTime @default(now()) @map("created_at")
 
+  user              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipeIngredients RecipeIngredient[]
   foodLogEntries    FoodLogEntry[]
 
+  @@index([userId])
   @@index([name])
   @@index([category])
   @@map("ingredients")
@@ -35,6 +54,7 @@ enum RecipeStatus {
 
 model Recipe {
   id                String       @id @default(uuid()) @db.Uuid
+  userId            String?      @db.Uuid @map("user_id")
   name              String
   description       String?
   servings          Int          @default(1)
@@ -46,9 +66,11 @@ model Recipe {
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
+  user           User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
   ingredients    RecipeIngredient[]
   foodLogEntries FoodLogEntry[]
 
+  @@index([userId])
   @@index([name])
   @@index([status])
   @@index([isFavorite])
@@ -80,6 +102,7 @@ enum MealType {
 
 model FoodLogEntry {
   id           String      @id @default(uuid()) @db.Uuid
+  userId       String?     @db.Uuid @map("user_id")
   date         DateTime    @db.Date
   mealType     MealType    @map("meal_type")
   name         String
@@ -93,11 +116,14 @@ model FoodLogEntry {
   fiber        Decimal     @default(0) @db.Decimal(8, 2)
   createdAt    DateTime    @default(now()) @map("created_at")
 
+  user         User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe       Recipe?     @relation(fields: [recipeId], references: [id], onDelete: SetNull)
   ingredient   Ingredient? @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
 
+  @@index([userId])
   @@index([date])
   @@index([date, mealType])
+  @@index([userId, date])
   @@map("food_log_entries")
 }
 
@@ -108,7 +134,8 @@ enum GoalType {
 }
 
 model DailyGoal {
-  id                  String   @id @default("default")
+  id                  String   @id @default(uuid())
+  userId              String?  @unique @db.Uuid @map("user_id")
   goalType            GoalType @default(WEIGHT_LOSS) @map("goal_type")
   calories            Int      @default(2000)
   maintenanceCalories Int      @default(2850) @map("maintenance_calories")
@@ -117,6 +144,8 @@ model DailyGoal {
   fat                 Decimal  @default(65.0) @db.Decimal(8, 2)
   fiber               Decimal  @default(30.0) @db.Decimal(8, 2)
   updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("daily_goals")
 }

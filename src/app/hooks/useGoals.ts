@@ -13,6 +13,7 @@ export const goalsQueryOptions = () => {
   return queryOptions({
     queryKey: ["dailyGoals"],
     queryFn: getDailyGoal,
+    retry: false,
   });
 };
 

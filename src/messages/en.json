@@ -439,5 +439,28 @@
   "meta": {
     "title": "NutriTrack - Nutrition Tracker",
     "description": "Track your recipes, ingredients, and daily nutrition with NutriTrack"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "loginTitle": "Sign in to NutriTrack",
+    "registerTitle": "Create an Account",
+    "subtitle": "Sign in or register to track meals and save your dishes",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "name": "Name (optional)",
+    "namePlaceholder": "Your name",
+    "loginBtn": "Sign In",
+    "registerBtn": "Create Account",
+    "logout": "Log Out",
+    "needAccount": "Don't have an account? Sign Up",
+    "haveAccount": "Already have an account? Sign In",
+    "invalidCredentials": "Invalid email or password",
+    "userExists": "User with this email already exists",
+    "errorOccurred": "An error occurred. Please try again",
+    "loggedAs": "Logged in as",
+    "guestPrompt": "Sign in to view your food diary"
   }
 }

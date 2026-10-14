@@ -22,6 +22,7 @@ export const foodLogQueryOptions = (dateStr?: string) => {
   return queryOptions({
     queryKey: ["foodLog", dateStr || "today"],
     queryFn: () => getFoodLog(dateStr),
+    retry: false,
   });
 };
 
@@ -33,6 +34,7 @@ export const foodLogSummaryQueryOptions = (startDate?: string, endDate?: string)
   return queryOptions({
     queryKey: ["foodLogSummary", startDate || "all", endDate || "all"],
     queryFn: () => getFoodLogSummary(startDate, endDate),
+    retry: false,
   });
 };
 

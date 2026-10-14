@@ -2,15 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../../utils/prisma/prisma";
 import { UpdateFoodLogEntrySchema } from "../../../../../utils/schemas/foodLog";
 import { ZodError } from "zod";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await req.json();
     const validatedData = UpdateFoodLogEntrySchema.parse(body);
+
+    const existing = await prisma.foodLogEntry.findUnique({
+      where: { id },
+    });
+
+    if (!existing || (existing.userId && existing.userId !== userId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const entry = await prisma.foodLogEntry.update({
       where: { id },
@@ -59,11 +73,25 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
-    const entry = await prisma.foodLogEntry.delete({
+    const existing = await prisma.foodLogEntry.findUnique({
       where: { id },
     });
-    return NextResponse.json(entry);
+
+    if (!existing || (existing.userId && existing.userId !== userId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    await prisma.foodLogEntry.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete food log entry:", error);
     return NextResponse.json(

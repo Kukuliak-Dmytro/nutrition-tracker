@@ -8,6 +8,8 @@ import {
   Target,
   Menu,
   X,
+  User as UserIcon,
+  LogOut,
 } from "lucide-react";
 import { ModeToggle } from "./ThemeSwitcher";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -16,15 +18,22 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useDailyGoals } from "@/app/hooks/useGoals";
 import { DailyGoalsModal } from "../dashboard/DailyGoalsModal";
+import { useCurrentUser, useLogout } from "@/app/hooks/useAuth";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isGoalsModalOpen, setIsGoalsModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   const t = useTranslations("navigation");
   const tDash = useTranslations("dashboard");
   const tMeals = useTranslations("meals");
+  const tAuth = useTranslations("auth");
   const pathname = usePathname();
   const { data: goals } = useDailyGoals();
+  const { data: currentUser } = useCurrentUser();
+  const logoutMutation = useLogout();
 
   const navLinks = [
     {
@@ -88,39 +97,75 @@ export default function Header() {
             })}
           </nav>
 
-          {/* 3. Right Utilities (Goals, Language, Theme) */}
+          {/* 3. Right Utilities (Goals, Language, Theme, Auth) */}
           <div className="hidden md:flex items-center gap-2.5">
-            {/* Quick Goals Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsGoalsModalOpen(true)}
-              className="h-9 gap-1.5 rounded-xl text-xs font-medium border-border/70 hover:border-primary/40 hover:bg-primary/5 transition-all">
-              <Target className="h-3.5 w-3.5 text-primary" />
-              <span>
-                {goals?.calories
-                  ? t("quickGoals", {
-                      calories: goals.calories,
-                      maintenance: goals.maintenanceCalories || 2850,
-                    })
-                  : t("goals")}
-              </span>
-            </Button>
+            {/* Quick Goals Button (only if logged in) */}
+            {currentUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsGoalsModalOpen(true)}
+                className="h-9 gap-1.5 rounded-xl text-xs font-medium border-border/70 hover:border-primary/40 hover:bg-primary/5 transition-all">
+                <Target className="h-3.5 w-3.5 text-primary" />
+                <span>
+                  {goals?.calories
+                    ? t("quickGoals", {
+                        calories: goals.calories,
+                        maintenance: goals.maintenanceCalories || 2850,
+                      })
+                    : t("goals")}
+                </span>
+              </Button>
+            )}
 
             <LanguageSwitcher />
             <ModeToggle />
+
+            {/* Auth Button / Profile */}
+            {currentUser ? (
+              <div className="flex items-center gap-1.5 pl-1.5 border-l border-border/60">
+                <div
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-muted/50 text-xs font-medium text-foreground"
+                  title={currentUser.email}>
+                  <UserIcon className="h-3.5 w-3.5 text-primary" />
+                  <span className="max-w-[110px] truncate">
+                    {currentUser.name || currentUser.email.split("@")[0]}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  className="h-8 w-8 rounded-xl text-muted-foreground hover:text-destructive"
+                  title={tAuth("logout")}>
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="h-9 gap-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+                <UserIcon className="h-3.5 w-3.5" />
+                <span>{tAuth("signIn")}</span>
+              </Button>
+            )}
           </div>
 
           {/* 4. Mobile Menu Toggle Button */}
           <div className="flex items-center gap-2 md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsGoalsModalOpen(true)}
-              className="h-9 w-9 rounded-xl"
-              aria-label={tDash("setupGoals")}>
-              <Target className="h-4 w-4 text-primary" />
-            </Button>
+            {currentUser && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsGoalsModalOpen(true)}
+                className="h-9 w-9 rounded-xl"
+                aria-label={tDash("setupGoals")}>
+                <Target className="h-4 w-4 text-primary" />
+              </Button>
+            )}
 
             <Button
               variant="outline"
@@ -161,20 +206,60 @@ export default function Header() {
               })}
             </nav>
 
+            {/* Mobile Auth Bar */}
+            {currentUser ? (
+              <div className="flex items-center justify-between px-1 pt-3 border-t border-border/50 text-xs">
+                <div className="flex items-center gap-2 text-foreground font-medium truncate max-w-[200px]">
+                  <UserIcon className="h-4 w-4 text-primary shrink-0" />
+                  <span className="truncate">{currentUser.name || currentUser.email}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    logoutMutation.mutate();
+                  }}
+                  disabled={logoutMutation.isPending}
+                  className="text-xs text-destructive hover:bg-destructive/10 h-8 gap-1.5 rounded-lg">
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span>{tAuth("logout")}</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="pt-2 border-t border-border/50">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="w-full h-9 gap-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <UserIcon className="h-3.5 w-3.5" />
+                  <span>{tAuth("signIn")}</span>
+                </Button>
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-3 border-t border-border/50">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setIsGoalsModalOpen(true);
-                }}
-                className="h-9 gap-2 rounded-xl text-xs font-medium">
-                <Target className="h-3.5 w-3.5 text-primary" />
-                <span>
-                  {t("goals")} ({goals?.calories ? `${goals.calories} ${tMeals("kcal")}` : tDash("setupGoals")})
-                </span>
-              </Button>
+              {currentUser ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsGoalsModalOpen(true);
+                  }}
+                  className="h-9 gap-2 rounded-xl text-xs font-medium">
+                  <Target className="h-3.5 w-3.5 text-primary" />
+                  <span>
+                    {t("goals")} ({goals?.calories ? `${goals.calories} ${tMeals("kcal")}` : tDash("setupGoals")})
+                  </span>
+                </Button>
+              ) : (
+                <div />
+              )}
 
               <div className="flex items-center gap-2">
                 <LanguageSwitcher />
@@ -185,10 +270,16 @@ export default function Header() {
         )}
       </header>
 
-      {/* Global Goals Settings Modal (accessible from Header anywhere) */}
+      {/* Global Goals Settings Modal */}
       <DailyGoalsModal
         isOpen={isGoalsModalOpen}
         onOpenChange={setIsGoalsModalOpen}
+      />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onOpenChange={setIsAuthModalOpen}
       />
     </>
   );

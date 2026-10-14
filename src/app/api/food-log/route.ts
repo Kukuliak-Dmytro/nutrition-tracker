@@ -2,15 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../utils/prisma/prisma";
 import { CreateFoodLogEntrySchema } from "../../../../utils/schemas/foodLog";
 import { ZodError } from "zod";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({
+        date: new Date().toISOString().split("T")[0],
+        entries: [],
+        totals: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+      });
+    }
+
     const { searchParams } = new URL(req.url);
     const dateParam = searchParams.get("date"); // e.g. "2026-10-13"
 
     let queryDate: Date;
     if (dateParam) {
-      // Create date at midnight UTC
       const [year, month, day] = dateParam.split("-").map(Number);
       queryDate = new Date(Date.UTC(year, month - 1, day));
     } else {
@@ -20,22 +29,23 @@ export async function GET(req: NextRequest) {
 
     const entries = await prisma.foodLogEntry.findMany({
       where: {
+        userId,
         date: queryDate,
       },
       include: {
         recipe: {
           select: {
-             id: true,
-             name: true,
-             cookedWeightGrams: true,
-             status: true,
+            id: true,
+            name: true,
+            cookedWeightGrams: true,
+            status: true,
           },
         },
         ingredient: {
           select: {
-             id: true,
-             name: true,
-             category: true,
+            id: true,
+            name: true,
+            category: true,
           },
         },
       },
@@ -71,6 +81,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validatedData = CreateFoodLogEntrySchema.parse(body);
 
@@ -82,6 +97,7 @@ export async function POST(req: NextRequest) {
 
     const entry = await prisma.foodLogEntry.create({
       data: {
+        userId,
         date: entryDate,
         mealType: validatedData.mealType,
         name: validatedData.name,

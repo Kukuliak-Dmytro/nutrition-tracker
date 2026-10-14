@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../../utils/prisma/prisma";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({
+        periodTotals: { totalCalories: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0, totalFiber: 0, daysTracked: 0 },
+        dailyStats: [],
+        deficitTrend: { totalDeficit: 0, totalSurplus: 0, netDeficit: 0, estimatedFatChangeKg: 0, maintenanceCalories: 2850 },
+        targetComparison: { targetCalories: 2200, targetProtein: 150, targetCarbs: 230, targetFat: 65, targetFiber: 30 },
+      });
+    }
+
     const { searchParams } = new URL(req.url);
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
 
-    let whereClause = {};
+    const whereClause: Record<string, unknown> = { userId };
     if (startDateParam || endDateParam) {
       const dateFilter: Record<string, Date> = {};
       if (startDateParam) {
@@ -18,34 +29,25 @@ export async function GET(req: NextRequest) {
         const [ey, em, ed] = endDateParam.split("-").map(Number);
         dateFilter.lte = new Date(Date.UTC(ey, em - 1, ed));
       }
-      whereClause = { date: dateFilter };
+      whereClause.date = dateFilter;
     }
 
     // 1. Fetch Goals
     let goal = await prisma.dailyGoal.findUnique({
-      where: { id: "default" },
+      where: { userId },
     });
     if (!goal) {
-      goal = await prisma.dailyGoal.create({
-        data: {
-          id: "default",
-          goalType: "WEIGHT_LOSS",
-          calories: 2200,
-          maintenanceCalories: 2850,
-          protein: 150,
-          carbs: 230,
-          fat: 65,
-          fiber: 30,
-        },
+      goal = await prisma.dailyGoal.findFirst({
+        where: { userId: null },
       });
     }
 
-    const targetCalories = Number(goal.calories);
-    const maintenanceCalories = Number(goal.maintenanceCalories ?? 2850);
-    const targetProtein = Number(goal.protein);
-    const targetCarbs = Number(goal.carbs);
-    const targetFat = Number(goal.fat);
-    const targetFiber = Number(goal.fiber);
+    const targetCalories = Number(goal?.calories ?? 2200);
+    const maintenanceCalories = Number(goal?.maintenanceCalories ?? 2850);
+    const targetProtein = Number(goal?.protein ?? 150);
+    const targetCarbs = Number(goal?.carbs ?? 230);
+    const targetFat = Number(goal?.fat ?? 65);
+    const targetFiber = Number(goal?.fiber ?? 30);
 
     // 2. Fetch all entries in range
     const entries = await prisma.foodLogEntry.findMany({
@@ -62,115 +64,116 @@ export async function GET(req: NextRequest) {
         carbs: number;
         fat: number;
         fiber: number;
-        entryCount: number;
       }
     >();
 
     for (const entry of entries) {
-      const dateKey = entry.date.toISOString().split("T")[0];
-      const existing = byDateMap.get(dateKey) || {
+      const dateStr = entry.date.toISOString().split("T")[0];
+      const current = byDateMap.get(dateStr) || {
         calories: 0,
         protein: 0,
         carbs: 0,
         fat: 0,
         fiber: 0,
-        entryCount: 0,
       };
 
-      existing.calories += Number(entry.calories);
-      existing.protein += Number(entry.protein);
-      existing.carbs += Number(entry.carbs);
-      existing.fat += Number(entry.fat);
-      existing.fiber += Number(entry.fiber);
-      existing.entryCount += 1;
+      current.calories += Number(entry.calories);
+      current.protein += Number(entry.protein);
+      current.carbs += Number(entry.carbs);
+      current.fat += Number(entry.fat);
+      current.fiber += Number(entry.fiber);
 
-      byDateMap.set(dateKey, existing);
+      byDateMap.set(dateStr, current);
     }
 
-    const days = Array.from(byDateMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([dateKey, vals]) => {
-        const cal = Math.round(vals.calories * 10) / 10;
-        const p = Math.round(vals.protein * 10) / 10;
-        const c = Math.round(vals.carbs * 10) / 10;
-        const f = Math.round(vals.fat * 10) / 10;
-        const fib = Math.round(vals.fiber * 10) / 10;
+    // 4. Calculate stats per day
+    const dailyStats = Array.from(byDateMap.entries()).map(([date, totals]) => {
+      const calories = Math.round(totals.calories * 10) / 10;
+      const protein = Math.round(totals.protein * 10) / 10;
+      const carbs = Math.round(totals.carbs * 10) / 10;
+      const fat = Math.round(totals.fat * 10) / 10;
+      const fiber = Math.round(totals.fiber * 10) / 10;
 
-        let status: "DEFICIT" | "MAINTENANCE" | "SURPLUS" = "DEFICIT";
-        if (cal > maintenanceCalories) {
-          status = "SURPLUS";
-        } else if (cal > targetCalories) {
-          status = "MAINTENANCE";
-        }
+      const deficitVsMaintenance = maintenanceCalories - calories;
+      const diffVsTarget = calories - targetCalories;
 
-        return {
-          date: dateKey,
-          calories: cal,
-          protein: p,
-          carbs: c,
-          fat: f,
-          fiber: fib,
-          entryCount: vals.entryCount,
-          status,
-          // Percentages for the chart: Y = percentage of goal
-          caloriesPct: targetCalories > 0 ? Math.round((cal / targetCalories) * 1000) / 10 : 0,
-          proteinPct: targetProtein > 0 ? Math.round((p / targetProtein) * 1000) / 10 : 0,
-          carbsPct: targetCarbs > 0 ? Math.round((c / targetCarbs) * 1000) / 10 : 0,
-          fatPct: targetFat > 0 ? Math.round((f / targetFat) * 1000) / 10 : 0,
-          fiberPct: targetFiber > 0 ? Math.round((fib / targetFiber) * 1000) / 10 : 0,
-          deficitVsTarget: Math.round((targetCalories - cal) * 10) / 10,
-          deficitVsMaintenance: Math.round((maintenanceCalories - cal) * 10) / 10,
-        };
-      });
+      return {
+        date,
+        calories,
+        protein,
+        carbs,
+        fat,
+        fiber,
+        maintenanceCalories,
+        targetCalories,
+        deficitVsMaintenance,
+        diffVsTarget,
+        isUnderTarget: calories <= targetCalories,
+        isDeficit: deficitVsMaintenance > 0,
+      };
+    });
 
-    // 4. Calculate cumulative stats
-    let totalCals = 0;
-    let totalMaintDeficit = 0;
-    let deficitDays = 0;
-    let maintenanceDays = 0;
-    let surplusDays = 0;
+    // 5. Total aggregations
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+    let totalFiber = 0;
+    let totalDeficit = 0;
+    let totalSurplus = 0;
 
-    for (const d of days) {
-      totalCals += d.calories;
-      totalMaintDeficit += d.deficitVsMaintenance;
-      if (d.status === "DEFICIT") deficitDays++;
-      else if (d.status === "MAINTENANCE") maintenanceDays++;
-      else surplusDays++;
+    for (const day of dailyStats) {
+      totalCalories += day.calories;
+      totalProtein += day.protein;
+      totalCarbs += day.carbs;
+      totalFat += day.fat;
+      totalFiber += day.fiber;
+
+      if (day.deficitVsMaintenance > 0) {
+        totalDeficit += day.deficitVsMaintenance;
+      } else {
+        totalSurplus += Math.abs(day.deficitVsMaintenance);
+      }
     }
 
-    const totalLoggedDays = days.length;
-    const averageCalories = totalLoggedDays > 0 ? Math.round(totalCals / totalLoggedDays) : 0;
-    const estimatedFatLossKg = Math.round((totalMaintDeficit / 7700) * 100) / 100;
+    const daysTracked = dailyStats.length;
+    const netDeficit = totalDeficit - totalSurplus;
+    const estimatedFatChangeKg = Math.round((netDeficit / 7700) * 100) / 100;
 
     return NextResponse.json({
-      days,
-      goals: {
-        goalType: goal.goalType || "WEIGHT_LOSS",
-        calories: targetCalories,
-        maintenanceCalories,
-        protein: targetProtein,
-        carbs: targetCarbs,
-        fat: targetFat,
-        fiber: targetFiber,
-        maintenancePct:
-          targetCalories > 0
-            ? Math.round((maintenanceCalories / targetCalories) * 1000) / 10
-            : 100,
+      periodTotals: {
+        totalCalories: Math.round(totalCalories),
+        totalProtein: Math.round(totalProtein),
+        totalCarbs: Math.round(totalCarbs),
+        totalFat: Math.round(totalFat),
+        totalFiber: Math.round(totalFiber),
+        daysTracked,
+        avgDailyCalories: daysTracked ? Math.round(totalCalories / daysTracked) : 0,
+        avgDailyProtein: daysTracked ? Math.round((totalProtein / daysTracked) * 10) / 10 : 0,
+        avgDailyCarbs: daysTracked ? Math.round((totalCarbs / daysTracked) * 10) / 10 : 0,
+        avgDailyFat: daysTracked ? Math.round((totalFat / daysTracked) * 10) / 10 : 0,
+        avgDailyFiber: daysTracked ? Math.round((totalFiber / daysTracked) * 10) / 10 : 0,
       },
-      stats: {
-        totalLoggedDays,
-        cumulativeMaintenanceDeficit: Math.round(totalMaintDeficit),
-        estimatedFatLossKg,
-        averageCalories,
-        deficitDays,
-        maintenanceDays,
-        surplusDays,
+      dailyStats,
+      deficitTrend: {
+        totalDeficit: Math.round(totalDeficit),
+        totalSurplus: Math.round(totalSurplus),
+        netDeficit: Math.round(netDeficit),
+        estimatedFatChangeKg,
+        maintenanceCalories,
+      },
+      targetComparison: {
+        targetCalories,
+        targetProtein,
+        targetCarbs,
+        targetFat,
+        targetFiber,
       },
     });
   } catch (error) {
     console.error("Failed to fetch food log summary:", error);
     return NextResponse.json(
-      { error: "Failed to fetch food log summary" },
+      { error: "Failed to fetch summary" },
       { status: 500 }
     );
   }

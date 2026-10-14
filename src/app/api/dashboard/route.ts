@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../utils/prisma/prisma";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const totalRecipes = await prisma.recipe.count();
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({ totalRecipes: 0, recentRecipes: [] });
+    }
+
+    const recipeWhere = {
+      OR: [{ userId }, { userId: null }],
+    };
+
+    const totalRecipes = await prisma.recipe.count({ where: recipeWhere });
     const recentRecipes = await prisma.recipe.findMany({
+      where: recipeWhere,
       take: 6,
       orderBy: { createdAt: "desc" },
       include: {

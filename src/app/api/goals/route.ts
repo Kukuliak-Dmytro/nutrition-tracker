@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../../utils/prisma/prisma";
 import { DailyGoalSchema } from "../../../../utils/schemas/goals";
 import { ZodError } from "zod";
+import { getSessionUserId } from "@/lib/auth";
 
 const DEFAULT_GOAL = {
-  id: "default",
   goalType: "WEIGHT_LOSS" as const,
   calories: 2200,
   maintenanceCalories: 2850,
@@ -16,14 +16,34 @@ const DEFAULT_GOAL = {
 
 export async function GET() {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     let goal = await prisma.dailyGoal.findUnique({
-      where: { id: "default" },
+      where: { userId },
     });
 
     if (!goal) {
-      goal = await prisma.dailyGoal.create({
-        data: DEFAULT_GOAL,
+      // Check if there is an unassigned goal from pre-auth
+      const unassignedGoal = await prisma.dailyGoal.findFirst({
+        where: { userId: null },
       });
+
+      if (unassignedGoal) {
+        goal = await prisma.dailyGoal.update({
+          where: { id: unassignedGoal.id },
+          data: { userId },
+        });
+      } else {
+        goal = await prisma.dailyGoal.create({
+          data: {
+            userId,
+            ...DEFAULT_GOAL,
+          },
+        });
+      }
     }
 
     return NextResponse.json({
@@ -48,11 +68,16 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const validatedData = DailyGoalSchema.parse(body);
 
     const goal = await prisma.dailyGoal.upsert({
-      where: { id: "default" },
+      where: { userId },
       update: {
         goalType: validatedData.goalType,
         calories: validatedData.calories,
@@ -63,7 +88,7 @@ export async function PUT(req: NextRequest) {
         fiber: validatedData.fiber,
       },
       create: {
-        id: "default",
+        userId,
         goalType: validatedData.goalType,
         calories: validatedData.calories,
         maintenanceCalories: validatedData.maintenanceCalories ?? 2850,

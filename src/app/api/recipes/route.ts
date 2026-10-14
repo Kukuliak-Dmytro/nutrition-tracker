@@ -7,6 +7,7 @@ import {
    RecipeQuerySchema,
 } from "../../../../utils/schemas/recipe";
 import { ZodError } from "zod";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
    try {
@@ -31,8 +32,14 @@ export async function GET(req: NextRequest) {
               }
             : {};
 
+      const userId = await getSessionUserId();
+      const userFilter = userId
+         ? { OR: [{ userId }, { userId: null }] }
+         : { userId: null };
+
       const search = queryParams.search?.trim();
       const where = {
+         ...userFilter,
          ...(queryParams.status ? { status: queryParams.status } : {}),
          ...(search
             ? {
@@ -215,11 +222,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
    try {
+      const userId = await getSessionUserId();
+      if (!userId) {
+         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
       const body = await req.json();
       const validatedData = CreateRecipeSchema.parse(body);
       const recipe = await retryDatabaseOperation(() =>
          prisma.recipe.create({
          data: {
+            userId,
             name: validatedData.name,
             description: validatedData.description,
             servings: validatedData.servings,
