@@ -99,7 +99,27 @@
     "fatAbbr": "F",
     "carbsAbbr": "C",
     "fiberAbbr": "Fib",
-    "deleteEntry": "Delete this entry from diary"
+    "deleteEntry": "Delete this entry from diary",
+    "editEntry": "Edit this entry"
+  },
+  "editFoodModal": {
+    "title": "Edit entry",
+    "description": "Update weight or nutritional values",
+    "dishBadge": "Dish",
+    "ingredientBadge": "Product",
+    "customBadge": "One-time entry",
+    "weightGrams": "Weight (grams) *",
+    "name": "Name *",
+    "namePlaceholder": "Dish / food name",
+    "calories": "Calories (kcal) *",
+    "protein": "Protein (g)",
+    "fat": "Fat (g)",
+    "carbs": "Carbs (g)",
+    "fiber": "Fiber (g)",
+    "calculatedNutrition": "Calculated for {grams}g portion:",
+    "saveBtn": "Save changes",
+    "cancelBtn": "Cancel",
+    "saving": "Saving..."
   },
   "addFoodModal": {
     "title": "Log food ({meal})",

@@ -3,8 +3,9 @@ import { useState } from "react";
 import { MealType, FoodLogEntryResponse } from "../../../utils/schemas/foodLog";
 import { useDeleteFoodLogEntry } from "@/app/hooks/useFoodLog";
 import { AddFoodModal } from "./AddFoodModal";
+import { EditFoodModal } from "./EditFoodModal";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, Trash2 } from "lucide-react";
+import { PlusIcon, Trash2, Pencil } from "lucide-react";
 
 import { useTranslations } from "next-intl";
 
@@ -25,6 +26,7 @@ export function MealSection({
 }: MealSectionProps) {
   const tMeals = useTranslations("meals");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<FoodLogEntryResponse | null>(null);
   const { mutate: deleteEntry } = useDeleteFoodLogEntry();
 
   const subtotal = entries.reduce(
@@ -139,14 +141,24 @@ export function MealSection({
                 </div>
               </div>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => deleteEntry(item.id)}
-                aria-label={tMeals("deleteEntry")}
-                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setEditingEntry(item)}
+                  aria-label={tMeals("editEntry")}
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteEntry(item.id)}
+                  aria-label={tMeals("deleteEntry")}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -158,6 +170,12 @@ export function MealSection({
         date={date}
         mealType={mealType}
         mealTitle={title}
+      />
+
+      <EditFoodModal
+        isOpen={Boolean(editingEntry)}
+        onOpenChange={(open) => !open && setEditingEntry(null)}
+        entry={editingEntry}
       />
     </div>
   );

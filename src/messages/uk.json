@@ -99,7 +99,27 @@
     "fatAbbr": "Ж",
     "carbsAbbr": "В",
     "fiberAbbr": "Кл",
-    "deleteEntry": "Видалити цей запис зі щоденника"
+    "deleteEntry": "Видалити цей запис зі щоденника",
+    "editEntry": "Редагувати цей запис"
+  },
+  "editFoodModal": {
+    "title": "Редагувати запис",
+    "description": "Змініть вагу або показники страви",
+    "dishBadge": "Страва",
+    "ingredientBadge": "Продукт",
+    "customBadge": "Одноразовий запис",
+    "weightGrams": "Вага (грами) *",
+    "name": "Назва *",
+    "namePlaceholder": "Назва страви / продукту",
+    "calories": "Калорії (ккал) *",
+    "protein": "Білки (г)",
+    "fat": "Жири (г)",
+    "carbs": "Вуглеводи (г)",
+    "fiber": "Клітковина (г)",
+    "calculatedNutrition": "Розраховано на {grams}г порції:",
+    "saveBtn": "Зберегти зміни",
+    "cancelBtn": "Скасувати",
+    "saving": "Збереження..."
   },
   "addFoodModal": {
     "title": "Додати спожиту їжу ({meal})",
