@@ -9,10 +9,19 @@
     "fiber": 0
   },
   {
-    "name": "Куряче філе",
+    "name": "Куряче філе (сире)",
+    "category": "М'ясо",
+    "calories": 113,
+    "protein": 23.5,
+    "carbs": 0,
+    "fat": 1.8,
+    "fiber": 0
+  },
+  {
+    "name": "Куряче філе (готове)",
     "category": "М'ясо",
     "calories": 165,
-    "protein": 23,
+    "protein": 31,
     "carbs": 0,
     "fat": 3.6,
     "fiber": 0
@@ -232,6 +241,15 @@
     "carbs": 7.4,
     "fat": 0.7,
     "fiber": 5.7
+  },
+  {
+    "name": "Олія",
+    "category": "Жири та олії",
+    "calories": 884,
+    "protein": 0,
+    "carbs": 0,
+    "fat": 100,
+    "fiber": 0
   },
   {
     "name": "Олія соняшникова",
