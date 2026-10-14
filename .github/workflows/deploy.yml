@@ -64,7 +64,7 @@ jobs:
           docker compose up -d --build
           
           echo "📦 Running Prisma migrations..."
-          docker compose exec -T app npx prisma migrate deploy || true
+          docker compose exec -T app npx --yes prisma@6.17.1 migrate deploy || true
           
           echo "🧹 Pruning unused images..."
           docker image prune -f
