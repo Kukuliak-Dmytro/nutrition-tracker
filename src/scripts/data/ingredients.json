@@ -736,5 +736,14 @@
     "carbs": 39,
     "fat": 22,
     "fiber": 1.5
+  },
+  {
+    "name": "Ківі",
+    "category": "Фрукти",
+    "calories": 61,
+    "protein": 1.1,
+    "carbs": 14.7,
+    "fat": 0.5,
+    "fiber": 3
   }
 ]
