@@ -808,5 +808,23 @@
     "carbs": 48.2,
     "fat": 0.8,
     "fiber": 2.0
+  },
+  {
+    "name": "Батончик Бонобар (Bono Bar)",
+    "category": "Снеки",
+    "calories": 382,
+    "protein": 4.4,
+    "carbs": 71.7,
+    "fat": 10.0,
+    "fiber": 3.5
+  },
+  {
+    "name": "Батончик Бонобар",
+    "category": "Снеки",
+    "calories": 382,
+    "protein": 4.4,
+    "carbs": 71.7,
+    "fat": 10.0,
+    "fiber": 3.5
   }
 ]
