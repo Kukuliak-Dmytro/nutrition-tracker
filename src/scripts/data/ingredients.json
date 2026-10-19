@@ -826,5 +826,23 @@
     "carbs": 71.7,
     "fat": 10.0,
     "fiber": 3.5
+  },
+  {
+    "name": "Нут варений",
+    "category": "Бобові",
+    "calories": 164.0,
+    "protein": 8.9,
+    "carbs": 27.4,
+    "fat": 2.6,
+    "fiber": 7.6
+  },
+  {
+    "name": "Салат з печеного буряка",
+    "category": "Страви",
+    "calories": 112.8,
+    "protein": 1.6,
+    "carbs": 12.6,
+    "fat": 6.2,
+    "fiber": 2.8
   }
 ]
