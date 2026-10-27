@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       messages: modelMessages,
       tools,
       temperature: 0.1,
-      stopWhen: isStepCount(5),
+      stopWhen: isStepCount(3),
       onStepFinish: async (step) => {
         try {
           if (step.toolCalls && step.toolCalls.length > 0) {
@@ -136,10 +136,16 @@ export async function POST(req: NextRequest) {
       },
       onFinish: async (event) => {
         const durationMs = Date.now() - startTime;
+        let responseContent = event.text || "";
+        // Prevent hallucinated raw tool call JSON strings from being saved as text
+        if (responseContent.trim().startsWith('{"name":') && responseContent.includes('"arguments":')) {
+          responseContent = "";
+        }
+
         aiLogger.logOutput({
           sessionId: currentSessionId,
           userId,
-          text: event.text || "",
+          text: responseContent,
           toolCallsCount: event.toolCalls?.length || 0,
           durationMs,
           finishReason: event.finishReason,
@@ -152,7 +158,7 @@ export async function POST(req: NextRequest) {
               data: {
                 sessionId: currentSessionId,
                 role: "assistant",
-                content: event.text || "",
+                content: responseContent,
                 toolCalls:
                   event.toolCalls && event.toolCalls.length > 0
                     ? (event.toolCalls as unknown as object)

@@ -159,6 +159,24 @@ export function AIToolCard({ tool }: { tool: ToolInvocation }) {
     );
   }
 
+  if (name === "get_weight_loss_progress") {
+    const res = tool.result as Record<string, unknown> | undefined;
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <BarChart3 className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? "Розраховую прогрес схуднення від початку..."
+            : `Прогрес за ${res?.totalDaysLogged || 0} дн.: дефіцит ${Math.round(Number(res?.cumulativeDeficitKcal || 0))} ккал (~${res?.estimatedFatLossKg || 0} кг жиру)`}
+        </span>
+      </div>
+    );
+  }
+
   if (name === "get_nutrition_goals") {
     const goals = tool.result as Record<string, unknown> | undefined;
     return (

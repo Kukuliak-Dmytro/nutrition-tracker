@@ -674,6 +674,80 @@ export function getAgentTools(userId: string) {
       },
     }),
 
+    get_weight_loss_progress: tool({
+      description:
+        "Отримує точний розрахунок прогресу схуднення, втрати жиру та сумарного дефіциту калорій користувача від початку ведення щоденника. ВИКОРИСТОВУЙ ЦЕЙ ІНСТРУМЕНТ, коли користувач запитує: 'на скільки я схуднув?', 'який у мене дефіцит?', 'чи скидаю я вагу?', 'скільки жиру я спалив?', 'який мій прогрес?'.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        try {
+          const entries = await prisma.foodLogEntry.findMany({
+            where: { userId },
+            orderBy: { date: "asc" },
+          });
+
+          const dayMap = new Map<string, number>();
+          for (const e of entries) {
+            const dStr = e.date.toISOString().split("T")[0];
+            dayMap.set(dStr, (dayMap.get(dStr) || 0) + Number(e.calories));
+          }
+
+          const loggedDates = Array.from(dayMap.keys()).sort();
+          const totalDaysLogged = loggedDates.length;
+
+          let goal = await prisma.dailyGoal.findUnique({
+            where: { userId },
+          });
+          if (!goal) {
+            goal = await prisma.dailyGoal.findFirst({
+              where: { userId: null },
+            });
+          }
+
+          const maintenanceCalories = Number(goal?.maintenanceCalories ?? 2850);
+          const targetCalories = Number(goal?.calories ?? 2000);
+
+          let totalEaten = 0;
+          let cumulativeMaintenanceDeficit = 0;
+
+          for (const dStr of loggedDates) {
+            const eaten = dayMap.get(dStr) || 0;
+            totalEaten += eaten;
+            cumulativeMaintenanceDeficit += (maintenanceCalories - eaten);
+          }
+
+          cumulativeMaintenanceDeficit = Math.round(cumulativeMaintenanceDeficit * 10) / 10;
+          const averageDailyCalories = totalDaysLogged > 0
+            ? Math.round((totalEaten / totalDaysLogged) * 10) / 10
+            : 0;
+          const averageDailyDeficit = totalDaysLogged > 0
+            ? Math.round((cumulativeMaintenanceDeficit / totalDaysLogged) * 10) / 10
+            : 0;
+
+          const estimatedFatLossKg = Math.round((cumulativeMaintenanceDeficit / 7700) * 100) / 100;
+          const plannedDailyDeficit = maintenanceCalories - targetCalories;
+
+          return {
+            totalDaysLogged,
+            firstLoggedDate: loggedDates[0] || null,
+            lastLoggedDate: loggedDates[loggedDates.length - 1] || null,
+            strategy: goal?.goalType ?? "WEIGHT_LOSS",
+            maintenanceCalories,
+            targetCalories,
+            plannedDailyDeficitKcal: plannedDailyDeficit,
+            actualAverageDailyCalories: averageDailyCalories,
+            actualAverageDailyDeficitKcal: averageDailyDeficit,
+            cumulativeDeficitKcal: cumulativeMaintenanceDeficit,
+            estimatedFatLossKg,
+            status: cumulativeMaintenanceDeficit > 0 ? "DEFICIT" : (cumulativeMaintenanceDeficit < 0 ? "SURPLUS" : "MAINTENANCE"),
+            explanation: `За ${totalDaysLogged} зафіксованих днів ви створили сумарний дефіцит ${cumulativeMaintenanceDeficit} ккал відносно підтримки (${maintenanceCalories} ккал/день). Розрахункова втрата жиру: ~${estimatedFatLossKg} кг (1 кг жиру ≈ 7700 ккал дефіциту). Ваше середнє споживання: ${averageDailyCalories} ккал/день при плані ${targetCalories} ккал/день.`,
+          };
+        } catch (error) {
+          console.error("get_weight_loss_progress error:", error);
+          return { error: "Не вдалося отримати прогрес схуднення" };
+        }
+      },
+    }),
+
     get_nutrition_summary: tool({
       description:
         "Отримує точну аналітику споживання їжі (суми та середньодобові значення КБЖВ, розбивку по тижнях або днях) за вибраний період: останні 7 днів, місяць, по тижнях або весь час.",
@@ -850,7 +924,6 @@ export function getAgentTools(userId: string) {
             totals,
             dailyAverages,
             deficitAndWeightProgress,
-            days: period === "all_time" ? undefined : days.slice(-7),
             weeklyBreakdown,
           };
         } catch (error) {

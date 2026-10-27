@@ -190,6 +190,10 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                     {message.parts.map((part, pIdx) => {
                       if (part.type === "text") {
                         if (!part.text) return null;
+                        const trimmed = part.text.trim();
+                        if (trimmed.startsWith('{"name":') && trimmed.includes('"arguments":')) {
+                          return null;
+                        }
                         return (
                           <div
                             key={pIdx}
