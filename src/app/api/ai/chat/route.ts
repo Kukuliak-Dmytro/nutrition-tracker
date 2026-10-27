@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
     const model = getLLMModel();
     const modelMessages = await convertToModelMessages(messages);
 
-    // Track consecutive tool calls to prevent calling the exact same tool with identical parameters in a row
-    let lastToolExecution: { name: string; argsKey: string } | null = null;
+    // Track all tool executions to prevent calling the exact same tool with identical parameters
+    const executedToolKeys = new Set<string>();
     let hadConsecutiveDuplicate = false;
 
     function canonicalArgsKey(args: unknown): string {
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       "get_available_dishes",
     ]);
 
-    // Wrap each tool execute function with consecutive identical parameter detection
+    // Wrap each tool execute function with duplicate identical parameter detection
     const tools: typeof rawTools = {} as typeof rawTools;
     for (const [toolName, toolDef] of Object.entries(rawTools)) {
       const anyToolDef = toolDef as unknown as {
@@ -136,18 +136,15 @@ export async function POST(req: NextRequest) {
         ...anyToolDef,
         execute: async (args: unknown, options: unknown) => {
           const argsKey = canonicalArgsKey(args);
-          if (
-            lastToolExecution &&
-            lastToolExecution.name === toolName &&
-            lastToolExecution.argsKey === argsKey
-          ) {
+          const toolCallKey = `${toolName}:${argsKey}`;
+          if (executedToolKeys.has(toolCallKey)) {
             hadConsecutiveDuplicate = true;
             return {
               isDuplicateConsecutive: true,
-              message: `Інструмент "${toolName}" щойно був викликаний з такими самими параметрами. Повторні ідентичні виклики підряд заборонені. Сформулюй фінальну відповідь користувачу на основі вже отриманих даних.`,
+              message: `Інструмент "${toolName}" вже був викликаний раніше з ідентичними параметрами. Повторні виклики заборонені. Сформулюй фінальну відповідь користувачу на основі вже отриманих даних.`,
             };
           }
-          lastToolExecution = { name: toolName, argsKey };
+          executedToolKeys.add(toolCallKey);
           return originalExecute(args, options);
         },
       };
@@ -163,37 +160,24 @@ export async function POST(req: NextRequest) {
       stopWhen: isStepCount(6),
       prepareStep: ({ stepNumber, steps }) => {
         if (steps.length > 0) {
-          const lastStep = steps[steps.length - 1];
-          const lastToolCalls = lastStep.toolCalls || [];
-          const lastCall = lastToolCalls[lastToolCalls.length - 1];
+          const allExecutedTools = steps.flatMap(
+            (s) => s.toolCalls?.map((tc) => tc.toolName) ?? []
+          );
+          const executedZeroArgTools = allExecutedTools.filter((name) =>
+            ZERO_ARG_TOOLS.has(name)
+          );
 
-          // Check if previous step and last step called the same tool with identical input
-          const isConsecutiveIdentical =
-            steps.length >= 2 &&
-            (() => {
-              const prevCalls = steps[steps.length - 2]?.toolCalls || [];
-              const currCalls = steps[steps.length - 1]?.toolCalls || [];
-              const prev = prevCalls[prevCalls.length - 1];
-              const curr = currCalls[currCalls.length - 1];
-              return (
-                prev &&
-                curr &&
-                prev.toolName === curr.toolName &&
-                canonicalArgsKey(prev.input) === canonicalArgsKey(curr.input)
-              );
-            })();
-
-          // If duplicate consecutive call was detected, or near step limit (stepNumber >= 5 out of 6),
+          // If duplicate call was detected, or near step limit (stepNumber >= 5 out of 6),
           // force toolChoice to "none" and clear activeTools so model produces final text response.
-          if (hadConsecutiveDuplicate || isConsecutiveIdentical || stepNumber >= 5) {
+          if (hadConsecutiveDuplicate || stepNumber >= 5) {
             return { toolChoice: "none", activeTools: [] };
           }
 
-          // If last step called a tool with zero parameters, exclude it from activeTools for this step
-          // so the model cannot call it with identical parameters in a row.
-          if (lastCall && ZERO_ARG_TOOLS.has(lastCall.toolName)) {
+          // Zero-arg tools (weight loss, goals, available dishes) have no varying arguments.
+          // Once called in this turn, exclude them from activeTools so the model cannot oscillate or re-call them.
+          if (executedZeroArgTools.length > 0) {
             const availableTools = (Object.keys(tools) as (keyof typeof tools)[]).filter(
-              (name) => name !== lastCall.toolName
+              (name) => !executedZeroArgTools.includes(name)
             );
             return {
               toolChoice: "auto",
