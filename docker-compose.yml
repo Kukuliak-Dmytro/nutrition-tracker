@@ -22,6 +22,22 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nutrition_tracker_ollama
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - nutrition_ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   app:
     build:
       context: .
@@ -40,6 +56,7 @@ services:
       DATABASE_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
       DIRECT_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cals.dvkplay.com}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
     env_file:
       - path: .env
         required: false
@@ -51,3 +68,4 @@ services:
 
 volumes:
   nutrition_postgres_data:
+  nutrition_ollama_data:
