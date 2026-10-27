@@ -104,6 +104,32 @@ export async function POST(req: NextRequest) {
       tools,
       temperature: 0.1,
       stopWhen: isStepCount(3),
+      prepareStep: ({ stepNumber, steps }) => {
+        if (steps.length > 0) {
+          const lastStep = steps[steps.length - 1];
+          const singleTurnTools = [
+            "get_weight_loss_progress",
+            "get_nutrition_goals",
+            "get_nutrition_summary",
+            "get_logged_meals",
+            "get_available_dishes",
+            "delete_logged_meal",
+            "update_nutrition_goals",
+            "log_food_entry",
+            "search_web_nutrition",
+          ];
+          const hasCompletedSingleTurnTool = lastStep?.toolResults?.some((tr) =>
+            singleTurnTools.includes(tr.toolName)
+          );
+          // Small local models (e.g. Qwen 2.5 3B) tend to re-call tools in an attractor loop.
+          // Once a data-retrieval or action tool has finished, force toolChoice to "none" so
+          // the model is compelled to generate its text response.
+          if (hasCompletedSingleTurnTool || stepNumber >= 2) {
+            return { toolChoice: "none" };
+          }
+        }
+        return {};
+      },
       onStepFinish: async (step) => {
         try {
           if (step.toolCalls && step.toolCalls.length > 0) {
