@@ -29,27 +29,23 @@ export default function DashboardClient() {
   }
 
   return (
-    <div className="flex flex-col w-full gap-8 my-4 max-w-7xl mx-auto px-2 sm:px-4 animate-in fade-in duration-300">
+    <div className="flex flex-col w-full gap-8 my-2 animate-in fade-in duration-300">
       {/* 1. Overall Tracking & Deficit Summary Banner */}
       <DashboardStatsBanner />
 
-      {/* 2. Interactive Analytics: Calendar with Progress Rings & Multi-metric Goal Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Calendar: 5 cols on desktop */}
-        <div className="lg:col-span-5 w-full">
-          <NutrientProgressCalendar
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-          />
-        </div>
+      {/* 2. Interactive Analytics: Calendar and Multi-metric Goal Chart stacked vertically */}
+      <div className="flex flex-col gap-6 w-full">
+        {/* Calendar: full width stacked on top */}
+        <NutrientProgressCalendar
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
 
-        {/* Goal Percentage Chart: 7 cols on desktop */}
-        <div className="lg:col-span-7 w-full">
-          <NutritionGoalChart
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-          />
-        </div>
+        {/* Goal Percentage Chart: full width stacked below */}
+        <NutritionGoalChart
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
       </div>
 
       {/* 3. Detailed Food Diary for the Selected Date */}

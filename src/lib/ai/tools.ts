@@ -564,6 +564,144 @@ export function getAgentTools(userId: string) {
       },
     }),
 
+    get_nutrition_summary: tool({
+      description:
+        "Отримує точну аналітику споживання їжі (суми та середньодобові значення КБЖВ, розбивку по тижнях або днях) за вибраний період: останні 7 днів, місяць, по тижнях або весь час.",
+      inputSchema: z.object({
+        period: z
+          .enum(["last_7_days", "last_30_days", "by_weeks", "all_time"])
+          .optional()
+          .default("last_7_days")
+          .describe("Період: 'last_7_days' (останні 7 днів), 'last_30_days' (місяць), 'by_weeks' (розбивка по календарних тижнях), 'all_time' (весь час)"),
+        startDate: z.string().optional().describe("Початкова дата YYYY-MM-DD"),
+        endDate: z.string().optional().describe("Кінцева дата YYYY-MM-DD"),
+      }),
+      execute: async ({ period, startDate, endDate }: { period?: "last_7_days" | "last_30_days" | "by_weeks" | "all_time"; startDate?: string; endDate?: string }) => {
+        try {
+          const now = new Date();
+          let fromDate: Date;
+          let toDate: Date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59));
+
+          if (startDate) {
+            const [y, m, d] = startDate.split("-").map(Number);
+            fromDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+          } else if (period === "last_7_days") {
+            fromDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0));
+          } else if (period === "last_30_days") {
+            fromDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0));
+          } else {
+            fromDate = new Date(2020, 0, 1);
+          }
+
+          if (endDate) {
+            const [y, m, d] = endDate.split("-").map(Number);
+            toDate = new Date(Date.UTC(y, m - 1, d, 23, 59, 59));
+          }
+
+          const entries = await prisma.foodLogEntry.findMany({
+            where: {
+              userId,
+              date: {
+                gte: fromDate,
+                lte: toDate,
+              },
+            },
+            orderBy: { date: "asc" },
+          });
+
+          // Group by date
+          const dayMap = new Map<string, { date: string; calories: number; protein: number; fat: number; carbs: number; fiber: number; count: number }>();
+
+          for (const e of entries) {
+            const dStr = e.date.toISOString().split("T")[0];
+            const existing = dayMap.get(dStr) || { date: dStr, calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, count: 0 };
+            existing.calories += Number(e.calories);
+            existing.protein += Number(e.protein);
+            existing.fat += Number(e.fat);
+            existing.carbs += Number(e.carbs);
+            existing.fiber += Number(e.fiber);
+            existing.count += 1;
+            dayMap.set(dStr, existing);
+          }
+
+          const days = Array.from(dayMap.values()).map((d) => ({
+            date: d.date,
+            calories: Math.round(d.calories * 10) / 10,
+            protein: Math.round(d.protein * 10) / 10,
+            fat: Math.round(d.fat * 10) / 10,
+            carbs: Math.round(d.carbs * 10) / 10,
+            fiber: Math.round(d.fiber * 10) / 10,
+            entriesCount: d.count,
+          }));
+
+          const totalDaysLogged = days.length;
+          const totals = days.reduce(
+            (acc, curr) => ({
+              calories: Math.round((acc.calories + curr.calories) * 10) / 10,
+              protein: Math.round((acc.protein + curr.protein) * 10) / 10,
+              fat: Math.round((acc.fat + curr.fat) * 10) / 10,
+              carbs: Math.round((acc.carbs + curr.carbs) * 10) / 10,
+              fiber: Math.round((acc.fiber + curr.fiber) * 10) / 10,
+            }),
+            { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 }
+          );
+
+          const dailyAverages = totalDaysLogged > 0 ? {
+            calories: Math.round((totals.calories / totalDaysLogged) * 10) / 10,
+            protein: Math.round((totals.protein / totalDaysLogged) * 10) / 10,
+            fat: Math.round((totals.fat / totalDaysLogged) * 10) / 10,
+            carbs: Math.round((totals.carbs / totalDaysLogged) * 10) / 10,
+            fiber: Math.round((totals.fiber / totalDaysLogged) * 10) / 10,
+          } : null;
+
+          // Group by calendar weeks if requested
+          let weeklyBreakdown = null;
+          if (period === "by_weeks" || period === "all_time") {
+            const weekMap = new Map<string, { weekLabel: string; calories: number; protein: number; fat: number; carbs: number; daysCount: number }>();
+            for (const d of days) {
+              const dt = new Date(d.date);
+              const dayOfWeek = dt.getUTCDay() === 0 ? 7 : dt.getUTCDay();
+              const monday = new Date(dt);
+              monday.setUTCDate(dt.getUTCDate() - dayOfWeek + 1);
+              const sunday = new Date(monday);
+              sunday.setUTCDate(monday.getUTCDate() + 6);
+              const label = `${monday.toISOString().split("T")[0]} — ${sunday.toISOString().split("T")[0]}`;
+
+              const w = weekMap.get(label) || { weekLabel: label, calories: 0, protein: 0, fat: 0, carbs: 0, daysCount: 0 };
+              w.calories += d.calories;
+              w.protein += d.protein;
+              w.fat += d.fat;
+              w.carbs += d.carbs;
+              w.daysCount += 1;
+              weekMap.set(label, w);
+            }
+
+            weeklyBreakdown = Array.from(weekMap.values()).map((w) => ({
+              week: w.weekLabel,
+              daysLogged: w.daysCount,
+              totalCalories: Math.round(w.calories * 10) / 10,
+              averageCaloriesPerDay: Math.round((w.calories / w.daysCount) * 10) / 10,
+              averageProteinPerDay: Math.round((w.protein / w.daysCount) * 10) / 10,
+              averageFatPerDay: Math.round((w.fat / w.daysCount) * 10) / 10,
+              averageCarbsPerDay: Math.round((w.carbs / w.daysCount) * 10) / 10,
+            }));
+          }
+
+          return {
+            period: period || "last_7_days",
+            totalDaysLogged,
+            totals,
+            dailyAverages,
+            days: days.slice(-7),
+            weeklyBreakdown,
+          };
+        } catch (error) {
+          console.error("get_nutrition_summary error:", error);
+          return { error: "Не вдалося отримати зведені дані аналітики" };
+        }
+      },
+    }),
+
     delete_logged_meal: tool({
       description: "Видаляє конкретний запис споживання їжі зі щоденника за його ID.",
       inputSchema: z.object({

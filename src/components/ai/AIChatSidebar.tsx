@@ -95,7 +95,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     <aside
       className={
         isOpen
-          ? "fixed inset-0 z-50 flex flex-col bg-background w-full h-[100dvh] animate-in slide-in-from-top duration-300 lg:static lg:inset-auto lg:z-10 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-[380px] xl:w-[420px] lg:border-l lg:border-border lg:animate-none lg:shadow-none lg:shrink-0"
+          ? "fixed inset-0 z-50 flex flex-col bg-background w-full h-[100dvh] animate-in slide-in-from-top duration-300 lg:sticky lg:top-16 lg:inset-auto lg:z-30 lg:h-[calc(100vh-4rem)] lg:w-[400px] xl:w-[440px] lg:border-l lg:border-border lg:bg-background lg:animate-none lg:shadow-none lg:shrink-0"
           : "hidden"
       }
       aria-label="AI Food Assistant">

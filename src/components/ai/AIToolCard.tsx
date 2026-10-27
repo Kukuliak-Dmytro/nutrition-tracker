@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Loader2, Search, PlusCircle, Trash2, Calendar, Utensils } from "lucide-react";
+import { CheckCircle2, Loader2, Search, PlusCircle, Trash2, Calendar, Utensils, BarChart3 } from "lucide-react";
 
 interface LoggedEntry {
   name: string;
@@ -19,6 +19,14 @@ interface LoggedResult {
     protein: number;
     fat: number;
     carbs: number;
+  };
+  totalDaysLogged?: number;
+  dailyAverages?: {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    fiber: number;
   };
   count?: number;
   dishes?: Array<{
@@ -146,6 +154,23 @@ export function AIToolCard({ tool }: { tool: ToolInvocation }) {
           {isExecuting
             ? `Перевірка записів за ${tool.args?.date || ""}...`
             : `Знайдено ${tool.result?.count || 0} записів (${tool.result?.totals?.calories || 0} ккал)`}
+        </span>
+      </div>
+    );
+  }
+
+  if (name === "get_nutrition_summary") {
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <BarChart3 className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? "Розраховую аналітику за період..."
+            : `Зведено дані за ${tool.result?.totalDaysLogged || 0} днів (${tool.result?.dailyAverages?.calories || 0} ккал/день у середньому)`}
         </span>
       </div>
     );
