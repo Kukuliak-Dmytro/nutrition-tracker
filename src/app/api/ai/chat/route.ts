@@ -97,36 +97,54 @@ export async function POST(req: NextRequest) {
     const modelMessages = await convertToModelMessages(messages);
 
     // 4. Stream turn with agentic tool loop
+    const TERMINAL_TOOLS = new Set([
+      "get_weight_loss_progress",
+      "get_nutrition_goals",
+      "get_nutrition_summary",
+      "get_logged_meals",
+      "get_available_dishes",
+      "delete_logged_meal",
+      "update_nutrition_goals",
+      "log_food_entry",
+    ]);
+
     const result = streamText({
       model,
       system: systemPrompt,
       messages: modelMessages,
       tools,
       temperature: 0.1,
-      stopWhen: isStepCount(3),
+      stopWhen: isStepCount(5),
       prepareStep: ({ stepNumber, steps }) => {
         if (steps.length > 0) {
-          const lastStep = steps[steps.length - 1];
-          const singleTurnTools = [
-            "get_weight_loss_progress",
-            "get_nutrition_goals",
-            "get_nutrition_summary",
-            "get_logged_meals",
-            "get_available_dishes",
-            "delete_logged_meal",
-            "update_nutrition_goals",
-            "log_food_entry",
-            "search_web_nutrition",
-          ];
-          const hasCompletedSingleTurnTool = lastStep?.toolResults?.some((tr) =>
-            singleTurnTools.includes(tr.toolName)
+          const executedTools = steps.flatMap(
+            (s) => s.toolResults?.map((tr) => tr.toolName) ?? []
           );
-          // Small local models (e.g. Qwen 2.5 3B) tend to re-call tools in an attractor loop.
-          // Once a data-retrieval or action tool has finished, force toolChoice to "none" so
-          // the model is compelled to generate its text response.
-          if (hasCompletedSingleTurnTool || stepNumber >= 2) {
+          const lastStep = steps[steps.length - 1];
+          const hasCompletedTerminal = lastStep?.toolResults?.some((tr) =>
+            TERMINAL_TOOLS.has(tr.toolName)
+          );
+
+          // Once a terminal action or data summary tool is executed, or if we're near the step limit,
+          // force toolChoice to "none" so the model is guaranteed to generate a final text response.
+          if (hasCompletedTerminal || stepNumber >= 4) {
             return { toolChoice: "none" };
           }
+
+          // For intermediate steps (e.g. search_foods -> search_web_nutrition -> log_food_entry),
+          // eliminate already executed tools from activeTools to prevent local model attractor loops.
+          const availableTools = Object.keys(tools).filter(
+            (t) => !executedTools.includes(t)
+          );
+
+          if (availableTools.length === 0) {
+            return { toolChoice: "none" };
+          }
+
+          return {
+            toolChoice: "auto",
+            activeTools: availableTools as (keyof typeof tools)[],
+          };
         }
         return {};
       },
