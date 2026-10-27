@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Loader2, Search, PlusCircle, Trash2, Calendar, Utensils, BarChart3 } from "lucide-react";
+import { CheckCircle2, Loader2, Search, PlusCircle, Trash2, Calendar, Utensils, BarChart3, Target } from "lucide-react";
 
 interface LoggedEntry {
   name: string;
@@ -159,7 +159,46 @@ export function AIToolCard({ tool }: { tool: ToolInvocation }) {
     );
   }
 
+  if (name === "get_nutrition_goals") {
+    const goals = tool.result as Record<string, unknown> | undefined;
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <Target className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? "Отримую налаштування цілей..."
+            : `Ціль: ${goals?.strategyName || "Харчування"} (план: ${goals?.targetCalories || 0} ккал, підтримка: ${goals?.maintenanceCalories || 0} ккал)`}
+        </span>
+      </div>
+    );
+  }
+
+  if (name === "update_nutrition_goals") {
+    const res = tool.result as Record<string, unknown> | undefined;
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-foreground">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? "Оновлюю цілі харчування..."
+            : `Оновлено цілі: план ${res?.calories || 0} ккал, підтримка ${res?.maintenanceCalories || 0} ккал`}
+        </span>
+      </div>
+    );
+  }
+
   if (name === "get_nutrition_summary") {
+    const deficitInfo = (tool.result as Record<string, unknown> | undefined)?.deficitAndWeightProgress as
+      | { cumulativeDeficitKcal?: number; estimatedFatLossKg?: number }
+      | undefined;
     return (
       <div className="my-1.5 flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
         {isExecuting ? (
@@ -170,6 +209,8 @@ export function AIToolCard({ tool }: { tool: ToolInvocation }) {
         <span>
           {isExecuting
             ? "Розраховую аналітику за період..."
+            : deficitInfo && typeof deficitInfo.estimatedFatLossKg === "number"
+            ? `Зведено за ${tool.result?.totalDaysLogged || 0} дн. (дефіцит ${Math.round(deficitInfo.cumulativeDeficitKcal || 0)} ккал, ~${deficitInfo.estimatedFatLossKg} кг жиру)`
             : `Зведено дані за ${tool.result?.totalDaysLogged || 0} днів (${tool.result?.dailyAverages?.calories || 0} ккал/день у середньому)`}
         </span>
       </div>

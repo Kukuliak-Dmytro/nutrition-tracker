@@ -569,6 +569,111 @@ export function getAgentTools(userId: string) {
       },
     }),
 
+    get_nutrition_goals: tool({
+      description:
+        "Отримує поточні цілі харчування користувача (стратегію: схуднення / набір / підтримка, базову підтримку ваги maintenanceCalories, планову калорійність targetCalories, плановий дефіцит або профіцит та цільові грами білків, жирів, вуглеводів і клітковини).",
+      inputSchema: z.object({}),
+      execute: async () => {
+        try {
+          let goal = await prisma.dailyGoal.findUnique({
+            where: { userId },
+          });
+          if (!goal) {
+            goal = await prisma.dailyGoal.findFirst({
+              where: { userId: null },
+            });
+          }
+
+          const maintenanceCalories = Number(goal?.maintenanceCalories ?? 2850);
+          const targetCalories = Number(goal?.calories ?? 2000);
+          const plannedDailyDiff = maintenanceCalories - targetCalories;
+          const weeklyKgChange = Math.round((Math.abs(plannedDailyDiff) * 7 / 7700) * 100) / 100;
+
+          const strategyNames: Record<string, string> = {
+            WEIGHT_LOSS: "Схуднення (дефіцит)",
+            MUSCLE_GAIN: "Набір м'язової маси (профіцит)",
+            MAINTENANCE: "Підтримка поточної ваги (баланс)",
+          };
+
+          return {
+            hasGoal: Boolean(goal),
+            goalType: goal?.goalType ?? "WEIGHT_LOSS",
+            strategyName: strategyNames[goal?.goalType ?? "WEIGHT_LOSS"] || "Схуднення",
+            maintenanceCalories,
+            targetCalories,
+            plannedDailyDifferenceKcal: plannedDailyDiff,
+            plannedWeeklyWeightChangeKg: weeklyKgChange,
+            targetMacros: {
+              protein: Number(goal?.protein ?? 120),
+              fat: Number(goal?.fat ?? 65),
+              carbs: Number(goal?.carbs ?? 220),
+              fiber: Number(goal?.fiber ?? 30),
+            },
+          };
+        } catch (error) {
+          console.error("get_nutrition_goals error:", error);
+          return { error: "Не вдалося отримати цілі харчування" };
+        }
+      },
+    }),
+
+    update_nutrition_goals: tool({
+      description:
+        "Оновлює цілі харчування користувача (стратегію goalType, планові калорії, калорії підтримки, норми білків, жирів, вуглеводів, клітковини).",
+      inputSchema: z.object({
+        goalType: z.enum(["WEIGHT_LOSS", "MUSCLE_GAIN", "MAINTENANCE"]).optional().describe("Стратегія: WEIGHT_LOSS (схуднення), MUSCLE_GAIN (набір), MAINTENANCE (підтримка)"),
+        calories: z.number().optional().describe("Цільова добова калорійність"),
+        maintenanceCalories: z.number().optional().describe("Базова калорійність підтримки ваги"),
+        protein: z.number().optional().describe("Цільовий білок в грамах"),
+        fat: z.number().optional().describe("Цільові жири в грамах"),
+        carbs: z.number().optional().describe("Цільові вуглеводи в грамах"),
+        fiber: z.number().optional().describe("Цільова клітковина в грамах"),
+      }),
+      execute: async (args: {
+        goalType?: "WEIGHT_LOSS" | "MUSCLE_GAIN" | "MAINTENANCE";
+        calories?: number;
+        maintenanceCalories?: number;
+        protein?: number;
+        fat?: number;
+        carbs?: number;
+        fiber?: number;
+      }) => {
+        try {
+          const updated = await prisma.dailyGoal.upsert({
+            where: { userId },
+            update: {
+              ...(args.goalType ? { goalType: args.goalType } : {}),
+              ...(args.calories ? { calories: Math.round(args.calories) } : {}),
+              ...(args.maintenanceCalories ? { maintenanceCalories: Math.round(args.maintenanceCalories) } : {}),
+              ...(args.protein !== undefined ? { protein: args.protein } : {}),
+              ...(args.fat !== undefined ? { fat: args.fat } : {}),
+              ...(args.carbs !== undefined ? { carbs: args.carbs } : {}),
+              ...(args.fiber !== undefined ? { fiber: args.fiber } : {}),
+            },
+            create: {
+              userId,
+              goalType: args.goalType ?? "WEIGHT_LOSS",
+              calories: args.calories ? Math.round(args.calories) : 2000,
+              maintenanceCalories: args.maintenanceCalories ? Math.round(args.maintenanceCalories) : 2850,
+              protein: args.protein ?? 120,
+              fat: args.fat ?? 65,
+              carbs: args.carbs ?? 220,
+              fiber: args.fiber ?? 30,
+            },
+          });
+          return {
+            success: true,
+            calories: Number(updated.calories),
+            maintenanceCalories: Number(updated.maintenanceCalories),
+            goalType: updated.goalType,
+          };
+        } catch (error) {
+          console.error("update_nutrition_goals error:", error);
+          return { error: "Не вдалося оновити цілі харчування" };
+        }
+      },
+    }),
+
     get_nutrition_summary: tool({
       description:
         "Отримує точну аналітику споживання їжі (суми та середньодобові значення КБЖВ, розбивку по тижнях або днях) за вибраний період: останні 7 днів, місяць, по тижнях або весь час.",
@@ -685,14 +790,23 @@ export function getAgentTools(userId: string) {
           // 1 kg of body fat ≈ 7,700 kcal deficit
           const estimatedFatLossKg = Math.round((cumulativeMaintenanceDeficit / 7700) * 100) / 100;
 
+          const plannedDailyDeficit = maintenanceCalories - targetCalories;
           const deficitAndWeightProgress = {
             hasGoal: Boolean(goal),
+            strategy: goal?.goalType ?? "WEIGHT_LOSS",
             maintenanceCalories,
             targetCalories,
+            plannedDailyDeficitKcal: plannedDailyDeficit,
             totalDaysLogged,
             cumulativeDeficitKcal: cumulativeMaintenanceDeficit,
             averageDailyDeficitKcal: averageDailyDeficit,
             estimatedFatLossKg,
+            targetMacros: {
+              protein: Number(goal?.protein ?? 120),
+              fat: Number(goal?.fat ?? 65),
+              carbs: Number(goal?.carbs ?? 220),
+              fiber: Number(goal?.fiber ?? 30),
+            },
             status: cumulativeMaintenanceDeficit > 0 ? "DEFICIT" : (cumulativeMaintenanceDeficit < 0 ? "SURPLUS" : "MAINTENANCE"),
             explanation: `За ${totalDaysLogged} зафіксованих днів сумарний дефіцит від підтримки (${maintenanceCalories} ккал/день) складає ${cumulativeMaintenanceDeficit} ккал. Розрахункова втрата жиру: ~${estimatedFatLossKg} кг (1 кг жиру ≈ 7700 ккал дефіциту).`,
           };
