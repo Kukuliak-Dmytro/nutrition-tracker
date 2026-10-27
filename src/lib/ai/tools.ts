@@ -307,8 +307,10 @@ export function getAgentTools(userId: string) {
         }>;
       }) => {
         try {
-          const [year, month, day] = args.date.split("-").map(Number);
-          const entryDate = new Date(Date.UTC(year, month - 1, day));
+          const parsed = parseDateString(args.date);
+          const entryDate = parsed
+            ? new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day))
+            : new Date();
 
           const createdEntries = [];
 
@@ -520,8 +522,11 @@ export function getAgentTools(userId: string) {
       }),
       execute: async ({ date }: { date: string }) => {
         try {
-          const [year, month, day] = date.split("-").map(Number);
-          const targetDate = new Date(Date.UTC(year, month - 1, day));
+          const parsed = parseDateString(date);
+          const now = new Date();
+          const targetDate = parsed
+            ? new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day))
+            : new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
           const entries = await prisma.foodLogEntry.findMany({
             where: {
@@ -572,30 +577,30 @@ export function getAgentTools(userId: string) {
           .enum(["last_7_days", "last_30_days", "by_weeks", "all_time"])
           .optional()
           .default("last_7_days")
-          .describe("Період: 'last_7_days' (останні 7 днів), 'last_30_days' (місяць), 'by_weeks' (розбивка по календарних тижнях), 'all_time' (весь час)"),
-        startDate: z.string().optional().describe("Початкова дата YYYY-MM-DD"),
-        endDate: z.string().optional().describe("Кінцева дата YYYY-MM-DD"),
+          .describe("Період аналітики: 'all_time' (за весь час від початку ведення щоденника / з початку рахування калорій), 'last_7_days' (останні 7 днів), 'last_30_days' (останній місяць), 'by_weeks' (по тижнях). Якщо запит містить 'з початку', 'за весь час' — обирай 'all_time'."),
+        startDate: z.string().nullable().optional().describe("Початкова дата YYYY-MM-DD"),
+        endDate: z.string().nullable().optional().describe("Кінцева дата YYYY-MM-DD"),
       }),
-      execute: async ({ period, startDate, endDate }: { period?: "last_7_days" | "last_30_days" | "by_weeks" | "all_time"; startDate?: string; endDate?: string }) => {
+      execute: async ({ period, startDate, endDate }: { period?: "last_7_days" | "last_30_days" | "by_weeks" | "all_time"; startDate?: string | null; endDate?: string | null }) => {
         try {
           const now = new Date();
           let fromDate: Date;
           let toDate: Date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59));
 
-          if (startDate) {
-            const [y, m, d] = startDate.split("-").map(Number);
-            fromDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+          const parsedStart = parseDateString(startDate);
+          if (parsedStart) {
+            fromDate = new Date(Date.UTC(parsedStart.year, parsedStart.month - 1, parsedStart.day, 0, 0, 0));
           } else if (period === "last_7_days") {
             fromDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0));
           } else if (period === "last_30_days") {
             fromDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0));
           } else {
-            fromDate = new Date(2020, 0, 1);
+            fromDate = new Date(Date.UTC(2020, 0, 1, 0, 0, 0));
           }
 
-          if (endDate) {
-            const [y, m, d] = endDate.split("-").map(Number);
-            toDate = new Date(Date.UTC(y, m - 1, d, 23, 59, 59));
+          const parsedEnd = parseDateString(endDate);
+          if (parsedEnd) {
+            toDate = new Date(Date.UTC(parsedEnd.year, parsedEnd.month - 1, parsedEnd.day, 23, 59, 59));
           }
 
           const entries = await prisma.foodLogEntry.findMany({
@@ -654,9 +659,47 @@ export function getAgentTools(userId: string) {
             fiber: Math.round((totals.fiber / totalDaysLogged) * 10) / 10,
           } : null;
 
-          // Group by calendar weeks if requested
+          // Fetch user's caloric goals for deficit and fat loss estimation
+          let goal = await prisma.dailyGoal.findUnique({
+            where: { userId },
+          });
+          if (!goal) {
+            goal = await prisma.dailyGoal.findFirst({
+              where: { userId: null },
+            });
+          }
+
+          const maintenanceCalories = Number(goal?.maintenanceCalories ?? 2850);
+          const targetCalories = Number(goal?.calories ?? 2000);
+
+          let cumulativeMaintenanceDeficit = 0;
+          for (const d of days) {
+            cumulativeMaintenanceDeficit += (maintenanceCalories - d.calories);
+          }
+          cumulativeMaintenanceDeficit = Math.round(cumulativeMaintenanceDeficit * 10) / 10;
+
+          const averageDailyDeficit = totalDaysLogged > 0
+            ? Math.round((cumulativeMaintenanceDeficit / totalDaysLogged) * 10) / 10
+            : 0;
+
+          // 1 kg of body fat ≈ 7,700 kcal deficit
+          const estimatedFatLossKg = Math.round((cumulativeMaintenanceDeficit / 7700) * 100) / 100;
+
+          const deficitAndWeightProgress = {
+            hasGoal: Boolean(goal),
+            maintenanceCalories,
+            targetCalories,
+            totalDaysLogged,
+            cumulativeDeficitKcal: cumulativeMaintenanceDeficit,
+            averageDailyDeficitKcal: averageDailyDeficit,
+            estimatedFatLossKg,
+            status: cumulativeMaintenanceDeficit > 0 ? "DEFICIT" : (cumulativeMaintenanceDeficit < 0 ? "SURPLUS" : "MAINTENANCE"),
+            explanation: `За ${totalDaysLogged} зафіксованих днів сумарний дефіцит від підтримки (${maintenanceCalories} ккал/день) складає ${cumulativeMaintenanceDeficit} ккал. Розрахункова втрата жиру: ~${estimatedFatLossKg} кг (1 кг жиру ≈ 7700 ккал дефіциту).`,
+          };
+
+          // Group by calendar weeks ONLY if period === "by_weeks"
           let weeklyBreakdown = null;
-          if (period === "by_weeks" || period === "all_time") {
+          if (period === "by_weeks") {
             const weekMap = new Map<string, { weekLabel: string; calories: number; protein: number; fat: number; carbs: number; daysCount: number }>();
             for (const d of days) {
               const dt = new Date(d.date);
@@ -692,7 +735,8 @@ export function getAgentTools(userId: string) {
             totalDaysLogged,
             totals,
             dailyAverages,
-            days: days.slice(-7),
+            deficitAndWeightProgress,
+            days: period === "all_time" ? undefined : days.slice(-7),
             weeklyBreakdown,
           };
         } catch (error) {
@@ -733,6 +777,16 @@ export function getAgentTools(userId: string) {
 
 function weightGramsValid(w: unknown): w is number {
   return typeof w === "number" && !isNaN(w) && w > 0;
+}
+
+function parseDateString(dateStr: string | null | undefined): { year: number; month: number; day: number } | null {
+  if (!dateStr || typeof dateStr !== "string") return null;
+  const dateOnly = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr.trim();
+  const parts = dateOnly.split("-").map(Number);
+  if (parts.length < 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) {
+    return null;
+  }
+  return { year: parts[0], month: parts[1], day: parts[2] };
 }
 
 function extractSearchKeywords(query: string): string[] {

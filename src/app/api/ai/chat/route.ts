@@ -5,12 +5,18 @@ import prisma from "../../../../../utils/prisma/prisma";
 import { getAgentTools } from "@/lib/ai/tools";
 import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import { getLLMModel } from "@/lib/ai/adapter";
+import { aiLogger } from "@/lib/ai/logger";
 
 export const maxDuration = 60; // Allow up to 60s for agentic tool loops
 
 export async function POST(req: NextRequest) {
+  let currentSessionId: string | undefined;
+  let activeUserId: string | null = null;
+  const startTime = Date.now();
+
   try {
     const userId = await getSessionUserId();
+    activeUserId = userId;
     if (!userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -61,7 +67,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const currentSessionId = activeSession.id;
+    currentSessionId = activeSession.id;
 
     // 2. Persist latest incoming user message
     const latestUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
@@ -75,6 +81,14 @@ export async function POST(req: NextRequest) {
         },
       });
     }
+
+    // Log user input
+    aiLogger.logInput({
+      sessionId: currentSessionId,
+      userId,
+      userMessage: latestUserText,
+      totalMessages: messages.length,
+    });
 
     // 3. Setup agent tools and system prompt
     const tools = getAgentTools(userId);
@@ -90,26 +104,69 @@ export async function POST(req: NextRequest) {
       tools,
       temperature: 0.1,
       stopWhen: isStepCount(5),
-      onFinish: async (event) => {
+      onStepFinish: async (step) => {
         try {
-          await prisma.chatMessage.create({
-            data: {
-              sessionId: currentSessionId,
-              role: "assistant",
-              content: event.text || "",
-              toolCalls:
-                event.toolCalls && event.toolCalls.length > 0
-                  ? (event.toolCalls as unknown as object)
-                  : undefined,
-            },
-          });
-          // Touch session updated_at
-          await prisma.chatSession.update({
-            where: { id: currentSessionId },
-            data: { updatedAt: new Date() },
-          });
+          if (step.toolCalls && step.toolCalls.length > 0) {
+            for (const tc of step.toolCalls) {
+              const anyTc = tc as Record<string, unknown>;
+              aiLogger.logToolCall({
+                sessionId: currentSessionId,
+                userId,
+                toolName: tc.toolName,
+                toolCallId: tc.toolCallId,
+                args: anyTc.input ?? anyTc.args,
+              });
+            }
+          }
+          if (step.toolResults && step.toolResults.length > 0) {
+            for (const tr of step.toolResults) {
+              const anyTr = tr as Record<string, unknown>;
+              aiLogger.logToolResult({
+                sessionId: currentSessionId,
+                userId,
+                toolName: tr.toolName,
+                toolCallId: tr.toolCallId,
+                result: anyTr.output ?? anyTr.result,
+              });
+            }
+          }
         } catch (err) {
-          console.error("Failed to persist assistant message:", err);
+          console.error("[onStepFinish logging error]", err);
+        }
+      },
+      onFinish: async (event) => {
+        const durationMs = Date.now() - startTime;
+        aiLogger.logOutput({
+          sessionId: currentSessionId,
+          userId,
+          text: event.text || "",
+          toolCallsCount: event.toolCalls?.length || 0,
+          durationMs,
+          finishReason: event.finishReason,
+          usage: event.usage,
+        });
+
+        if (currentSessionId) {
+          try {
+            await prisma.chatMessage.create({
+              data: {
+                sessionId: currentSessionId,
+                role: "assistant",
+                content: event.text || "",
+                toolCalls:
+                  event.toolCalls && event.toolCalls.length > 0
+                    ? (event.toolCalls as unknown as object)
+                    : undefined,
+              },
+            });
+            // Touch session updated_at
+            await prisma.chatSession.update({
+              where: { id: currentSessionId },
+              data: { updatedAt: new Date() },
+            });
+          } catch (err) {
+            console.error("Failed to persist assistant message:", err);
+          }
         }
       },
     });
@@ -120,6 +177,12 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    aiLogger.logError({
+      sessionId: currentSessionId,
+      userId: activeUserId,
+      error,
+      context: "POST /api/ai/chat",
+    });
     console.error("AI chat route error:", error);
     return new Response(
       JSON.stringify({

@@ -51,3 +51,7 @@ COMPREHENSIVE_APP_PLAN.md
 backups/
 *.dump
 !prisma/migrations/**/*.sql
+
+# logs
+/logs/
+*.log
