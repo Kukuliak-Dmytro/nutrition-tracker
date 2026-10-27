@@ -61,7 +61,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/90 backdrop-blur-md transition-all">
+      <header className="shrink-0 z-40 w-full border-b border-border/80 bg-background/90 backdrop-blur-md transition-all">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* 1. Brand Logo */}
           <Link

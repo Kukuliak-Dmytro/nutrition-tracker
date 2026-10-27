@@ -97,12 +97,12 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     <aside
       className={
         isOpen
-          ? "fixed inset-0 z-50 flex flex-col bg-background w-full h-[100dvh] animate-in slide-in-from-top duration-300 lg:sticky lg:top-16 lg:inset-auto lg:z-30 lg:h-[calc(100vh-4rem)] lg:w-[400px] xl:w-[440px] lg:border-l lg:border-border lg:bg-background lg:animate-none lg:shadow-none lg:shrink-0"
+          ? "fixed inset-0 z-50 flex flex-col bg-background w-full h-[100dvh] animate-in slide-in-from-top duration-300 lg:static lg:inset-auto lg:z-20 lg:h-full lg:w-[400px] xl:w-[440px] lg:border-l lg:border-border lg:bg-background lg:animate-none lg:shadow-none lg:shrink-0"
           : "hidden"
       }
       aria-label="AI Food Assistant">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border/80 px-4 py-3.5 bg-muted/20">
+        <header className="shrink-0 flex items-center justify-between border-b border-border/80 px-4 py-3.5 bg-muted/20">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Sparkles className="h-4 w-4" />
@@ -140,7 +140,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
         </header>
 
         {/* Messages Body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 text-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4 text-sm">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center px-4 space-y-4 text-muted-foreground my-auto">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -306,7 +306,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
         </div>
 
         {/* Input Footer */}
-        <footer className="border-t border-border/80 p-3 bg-card/60 backdrop-blur-md">
+        <footer className="shrink-0 border-t border-border/80 p-3 bg-card/60 backdrop-blur-md">
           <form
             onSubmit={(e) => {
               e.preventDefault();

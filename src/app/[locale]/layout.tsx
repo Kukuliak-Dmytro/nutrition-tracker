@@ -53,7 +53,7 @@ export default async function LocaleLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body>
+      <body className="h-screen overflow-hidden flex flex-col bg-background">
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider
             attribute="class"
