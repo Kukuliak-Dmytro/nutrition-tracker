@@ -267,6 +267,10 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                           output?: Record<string, unknown>;
                         };
                         const toolName = toolPart.toolName || toolPart.type.replace("tool-", "");
+                        // Skip rendering duplicate consecutive badges
+                        if (toolPart.output && toolPart.output.isDuplicateConsecutive) {
+                          return null;
+                        }
                         return (
                           <AIToolCard
                             key={pIdx}

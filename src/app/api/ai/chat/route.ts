@@ -91,60 +91,115 @@ export async function POST(req: NextRequest) {
     });
 
     // 3. Setup agent tools and system prompt
-    const tools = getAgentTools(userId);
+    const rawTools = getAgentTools(userId);
     const systemPrompt = buildSystemPrompt({ currentDate, currentTime });
     const model = getLLMModel();
     const modelMessages = await convertToModelMessages(messages);
 
-    // 4. Stream turn with agentic tool loop
-    const TERMINAL_TOOLS = new Set([
+    // Track consecutive tool calls to prevent calling the exact same tool with identical parameters in a row
+    let lastToolExecution: { name: string; argsKey: string } | null = null;
+    let hadConsecutiveDuplicate = false;
+
+    function canonicalArgsKey(args: unknown): string {
+      if (!args || typeof args !== "object") return "";
+      const sortObj = (obj: unknown): unknown => {
+        if (obj === null || typeof obj !== "object") return obj;
+        if (Array.isArray(obj)) return obj.map(sortObj);
+        const sortedKeys = Object.keys(obj as Record<string, unknown>).sort();
+        const result: Record<string, unknown> = {};
+        for (const key of sortedKeys) {
+          result[key] = sortObj((obj as Record<string, unknown>)[key]);
+        }
+        return result;
+      };
+      return JSON.stringify(sortObj(args));
+    }
+
+    const ZERO_ARG_TOOLS = new Set([
       "get_weight_loss_progress",
       "get_nutrition_goals",
-      "get_nutrition_summary",
-      "get_logged_meals",
       "get_available_dishes",
-      "delete_logged_meal",
-      "update_nutrition_goals",
-      "log_food_entry",
     ]);
 
+    // Wrap each tool execute function with consecutive identical parameter detection
+    const tools: typeof rawTools = {} as typeof rawTools;
+    for (const [toolName, toolDef] of Object.entries(rawTools)) {
+      const anyToolDef = toolDef as unknown as {
+        execute?: (args: unknown, options: unknown) => PromiseLike<unknown>;
+      };
+      if (!anyToolDef.execute) {
+        (tools as Record<string, unknown>)[toolName] = toolDef;
+        continue;
+      }
+      const originalExecute = anyToolDef.execute.bind(anyToolDef);
+      (tools as Record<string, unknown>)[toolName] = {
+        ...anyToolDef,
+        execute: async (args: unknown, options: unknown) => {
+          const argsKey = canonicalArgsKey(args);
+          if (
+            lastToolExecution &&
+            lastToolExecution.name === toolName &&
+            lastToolExecution.argsKey === argsKey
+          ) {
+            hadConsecutiveDuplicate = true;
+            return {
+              isDuplicateConsecutive: true,
+              message: `Інструмент "${toolName}" щойно був викликаний з такими самими параметрами. Повторні ідентичні виклики підряд заборонені. Сформулюй фінальну відповідь користувачу на основі вже отриманих даних.`,
+            };
+          }
+          lastToolExecution = { name: toolName, argsKey };
+          return originalExecute(args, options);
+        },
+      };
+    }
+
+    // 4. Stream turn with agentic tool loop
     const result = streamText({
       model,
       system: systemPrompt,
       messages: modelMessages,
       tools,
       temperature: 0.1,
-      stopWhen: isStepCount(5),
+      stopWhen: isStepCount(6),
       prepareStep: ({ stepNumber, steps }) => {
         if (steps.length > 0) {
-          const executedTools = steps.flatMap(
-            (s) => s.toolResults?.map((tr) => tr.toolName) ?? []
-          );
           const lastStep = steps[steps.length - 1];
-          const hasCompletedTerminal = lastStep?.toolResults?.some((tr) =>
-            TERMINAL_TOOLS.has(tr.toolName)
-          );
+          const lastToolCalls = lastStep.toolCalls || [];
+          const lastCall = lastToolCalls[lastToolCalls.length - 1];
 
-          // Once a terminal action or data summary tool is executed, or if we're near the step limit,
-          // force toolChoice to "none" so the model is guaranteed to generate a final text response.
-          if (hasCompletedTerminal || stepNumber >= 4) {
-            return { toolChoice: "none" };
+          // Check if previous step and last step called the same tool with identical input
+          const isConsecutiveIdentical =
+            steps.length >= 2 &&
+            (() => {
+              const prevCalls = steps[steps.length - 2]?.toolCalls || [];
+              const currCalls = steps[steps.length - 1]?.toolCalls || [];
+              const prev = prevCalls[prevCalls.length - 1];
+              const curr = currCalls[currCalls.length - 1];
+              return (
+                prev &&
+                curr &&
+                prev.toolName === curr.toolName &&
+                canonicalArgsKey(prev.input) === canonicalArgsKey(curr.input)
+              );
+            })();
+
+          // If duplicate consecutive call was detected, or near step limit (stepNumber >= 5 out of 6),
+          // force toolChoice to "none" and clear activeTools so model produces final text response.
+          if (hadConsecutiveDuplicate || isConsecutiveIdentical || stepNumber >= 5) {
+            return { toolChoice: "none", activeTools: [] };
           }
 
-          // For intermediate steps (e.g. search_foods -> search_web_nutrition -> log_food_entry),
-          // eliminate already executed tools from activeTools to prevent local model attractor loops.
-          const availableTools = Object.keys(tools).filter(
-            (t) => !executedTools.includes(t)
-          );
-
-          if (availableTools.length === 0) {
-            return { toolChoice: "none" };
+          // If last step called a tool with zero parameters, exclude it from activeTools for this step
+          // so the model cannot call it with identical parameters in a row.
+          if (lastCall && ZERO_ARG_TOOLS.has(lastCall.toolName)) {
+            const availableTools = (Object.keys(tools) as (keyof typeof tools)[]).filter(
+              (name) => name !== lastCall.toolName
+            );
+            return {
+              toolChoice: "auto",
+              activeTools: availableTools,
+            };
           }
-
-          return {
-            toolChoice: "auto",
-            activeTools: availableTools as (keyof typeof tools)[],
-          };
         }
         return {};
       },
