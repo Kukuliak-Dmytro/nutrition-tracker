@@ -91,21 +91,14 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     setSessionId(null);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Right Sidebar Sheet */}
-      <aside
-        className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-border bg-background shadow-2xl sm:w-[460px] md:w-[480px] animate-in slide-in-from-right duration-300"
-        aria-label="AI Food Assistant">
+    <aside
+      className={
+        isOpen
+          ? "fixed inset-0 z-50 flex flex-col bg-background w-full h-[100dvh] animate-in slide-in-from-top duration-300 lg:static lg:inset-auto lg:z-10 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-[380px] xl:w-[420px] lg:border-l lg:border-border lg:animate-none lg:shadow-none lg:shrink-0"
+          : "hidden"
+      }
+      aria-label="AI Food Assistant">
         {/* Header */}
         <header className="flex items-center justify-between border-b border-border/80 px-4 py-3.5 bg-muted/20">
           <div className="flex items-center gap-2.5">
@@ -315,6 +308,5 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
           </form>
         </footer>
       </aside>
-    </>
-  );
-}
+    );
+  }

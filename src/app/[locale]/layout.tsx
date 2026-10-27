@@ -4,6 +4,8 @@ import { QueryProvider } from '@/components/providers/query-provider';
 import Header from '@/components/layout/Header';
 import { Toaster } from '@/components/ui/sooner';
 import { AIAssistantTrigger } from '@/components/ai/AIAssistantTrigger';
+import { AIAssistantProvider } from '@/components/ai/AIAssistantContext';
+import { AppShell } from '@/components/layout/AppShell';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
@@ -61,12 +63,14 @@ export default async function LocaleLayout({
           >
             <ErrorBoundary>
               <QueryProvider>
-                <Header />
-                <div className="mx-auto w-full max-w-[2000px] px-6 pb-20 lg:px-10 flex flex-col items-center justify-center">
-                  {children}
-                </div>
-                <AIAssistantTrigger />
-                <Toaster />
+                <AIAssistantProvider>
+                  <Header />
+                  <AppShell>
+                    {children}
+                  </AppShell>
+                  <AIAssistantTrigger />
+                  <Toaster />
+                </AIAssistantProvider>
               </QueryProvider>
             </ErrorBoundary>
           </ThemeProvider>

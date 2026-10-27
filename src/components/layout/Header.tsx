@@ -10,6 +10,7 @@ import {
   X,
   User as UserIcon,
   LogOut,
+  Sparkles,
 } from "lucide-react";
 import { ModeToggle } from "./ThemeSwitcher";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -20,6 +21,7 @@ import { useDailyGoals } from "@/app/hooks/useGoals";
 import { DailyGoalsModal } from "../dashboard/DailyGoalsModal";
 import { useCurrentUser, useLogout } from "@/app/hooks/useAuth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { useAIAssistant } from "@/components/ai/AIAssistantContext";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -34,6 +36,7 @@ export default function Header() {
   const { data: goals } = useDailyGoals();
   const { data: currentUser } = useCurrentUser();
   const logoutMutation = useLogout();
+  const { isOpen: isAIOpen, toggleOpen: toggleAI, openAssistant } = useAIAssistant();
 
   const navLinks = [
     {
@@ -121,6 +124,21 @@ export default function Header() {
             <LanguageSwitcher />
             <ModeToggle />
 
+            {/* AI Assistant Desktop Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleAI}
+              className={`h-9 gap-1.5 rounded-xl text-xs font-medium border-border/70 transition-all ${
+                isAIOpen
+                  ? "bg-primary/10 text-primary border-primary/40 shadow-xs"
+                  : "hover:border-primary/40 hover:bg-primary/5"
+              }`}
+              title="AI Асистент">
+              <Sparkles className={`h-3.5 w-3.5 ${isAIOpen ? "text-primary fill-primary/20" : "text-primary"}`} />
+              <span className="hidden xl:inline">AI Асистент</span>
+            </Button>
+
             {/* Auth Button / Profile */}
             {currentUser ? (
               <div className="flex items-center gap-1.5 pl-1.5 border-l border-border/60">
@@ -166,6 +184,15 @@ export default function Header() {
                 <Target className="h-4 w-4 text-primary" />
               </Button>
             )}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openAssistant}
+              className="h-9 w-9 rounded-xl text-primary"
+              aria-label="AI Асистент">
+              <Sparkles className="h-4 w-4" />
+            </Button>
 
             <Button
               variant="outline"
@@ -241,6 +268,18 @@ export default function Header() {
                 </Button>
               </div>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                openAssistant();
+              }}
+              className="w-full h-9 gap-2 rounded-xl text-xs font-medium justify-start border-primary/20 bg-primary/5 text-primary hover:bg-primary/10">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>AI Асистент</span>
+            </Button>
 
             <div className="flex items-center justify-between pt-3 border-t border-border/50">
               {currentUser ? (
