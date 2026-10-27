@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
       system: systemPrompt,
       messages: modelMessages,
       tools,
+      temperature: 0.1,
       stopWhen: isStepCount(5),
       onFinish: async (event) => {
         try {
