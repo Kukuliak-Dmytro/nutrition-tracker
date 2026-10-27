@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AIToolCard } from "./AIToolCard";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface AIChatSidebarProps {
   isOpen: boolean;
@@ -183,7 +185,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                     </div>
                   )}
 
-                  <div className={`max-w-[85%] space-y-1.5 ${isUser ? "items-end" : "items-start"}`}>
+                  <div className={`space-y-1.5 ${isUser ? "max-w-[85%] items-end" : "flex-1 min-w-0 items-start"}`}>
                     {/* Render message parts */}
                     {message.parts.map((part, pIdx) => {
                       if (part.type === "text") {
@@ -191,12 +193,62 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                         return (
                           <div
                             key={pIdx}
-                            className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-xs ${
+                            className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-xs overflow-hidden ${
                               isUser
-                                ? "bg-primary text-primary-foreground rounded-br-xs"
-                                : "bg-muted/70 text-foreground border border-border/50 rounded-bl-xs"
+                                ? "bg-primary text-primary-foreground rounded-br-xs whitespace-pre-wrap ml-auto"
+                                : "bg-muted/70 text-foreground border border-border/50 rounded-bl-xs w-full"
                             }`}>
-                            <div className="whitespace-pre-wrap">{part.text}</div>
+                            {isUser ? (
+                              part.text
+                            ) : (
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  table: ({ children }) => (
+                                    <div className="my-2 w-full overflow-x-auto rounded-lg border border-border/60">
+                                      <table className="w-full text-left text-[11px] border-collapse">{children}</table>
+                                    </div>
+                                  ),
+                                  thead: ({ children }) => (
+                                    <thead className="bg-muted/80 border-b border-border/60">{children}</thead>
+                                  ),
+                                  tbody: ({ children }) => (
+                                    <tbody className="divide-y divide-border/40">{children}</tbody>
+                                  ),
+                                  tr: ({ children }) => (
+                                    <tr className="hover:bg-muted/40 transition-colors">{children}</tr>
+                                  ),
+                                  th: ({ children }) => (
+                                    <th className="px-2 py-1.5 font-semibold text-foreground text-[10px] whitespace-nowrap">
+                                      {children}
+                                    </th>
+                                  ),
+                                  td: ({ children }) => (
+                                    <td className="px-2 py-1.5 text-foreground/90 whitespace-nowrap">
+                                      {children}
+                                    </td>
+                                  ),
+                                  ul: ({ children }) => (
+                                    <ul className="my-1.5 space-y-1 pl-4 list-disc marker:text-primary">{children}</ul>
+                                  ),
+                                  ol: ({ children }) => (
+                                    <ol className="my-1.5 space-y-1 pl-4 list-decimal marker:text-primary">{children}</ol>
+                                  ),
+                                  li: ({ children }) => <li className="text-xs leading-relaxed">{children}</li>,
+                                  p: ({ children }) => <p className="mb-1.5 last:mb-0 leading-relaxed">{children}</p>,
+                                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                                  h1: ({ children }) => <h3 className="font-semibold text-sm mt-2 mb-1 text-foreground">{children}</h3>,
+                                  h2: ({ children }) => <h3 className="font-semibold text-sm mt-2 mb-1 text-foreground">{children}</h3>,
+                                  h3: ({ children }) => <h3 className="font-semibold text-xs mt-2 mb-1 text-foreground">{children}</h3>,
+                                  code: ({ children }) => (
+                                    <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-primary">
+                                      {children}
+                                    </code>
+                                  ),
+                                }}>
+                                {part.text}
+                              </ReactMarkdown>
+                            )}
                           </div>
                         );
                       }
