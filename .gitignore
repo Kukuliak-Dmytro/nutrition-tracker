@@ -46,3 +46,8 @@ yarn.lock
 next-env.d.ts
 .cursorignore
 COMPREHENSIVE_APP_PLAN.md
+
+# database backups
+backups/
+*.dump
+!prisma/migrations/**/*.sql

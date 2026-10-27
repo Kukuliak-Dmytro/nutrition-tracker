@@ -1,0 +1,152 @@
+"use client";
+
+import React from "react";
+import { CheckCircle2, Loader2, Search, PlusCircle, Trash2, Calendar } from "lucide-react";
+
+interface LoggedEntry {
+  name: string;
+  weightGrams: number;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+}
+
+interface LoggedResult {
+  entries?: LoggedEntry[];
+  totals?: {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+  };
+  count?: number;
+  ingredients?: unknown[];
+  recipes?: unknown[];
+  name?: string;
+  deletedName?: string;
+}
+
+interface ToolInvocation {
+  toolName?: string;
+  toolCallId?: string;
+  state?: "partial-call" | "call" | "result";
+  args?: Record<string, unknown>;
+  result?: LoggedResult;
+}
+
+export function AIToolCard({ tool }: { tool: ToolInvocation }) {
+  const isExecuting = tool.state !== "result";
+  const name = tool.toolName || "tool";
+
+  if (name === "log_food_entry") {
+    const res = tool.result;
+    return (
+      <div className="my-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
+        <div className="flex items-center gap-2 font-medium text-emerald-600 dark:text-emerald-400">
+          {isExecuting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" />
+          )}
+          <span>{isExecuting ? "Записую прийом їжі..." : "Записано в щоденник харчування"}</span>
+        </div>
+
+        {res?.entries && (
+          <div className="mt-2 space-y-1 text-muted-foreground">
+            {res.entries.map((item: LoggedEntry, idx: number) => (
+              <div key={idx} className="flex justify-between items-center text-foreground">
+                <span className="font-medium">• {item.name} ({item.weightGrams}г)</span>
+                <span className="text-xs text-muted-foreground">
+                  {item.calories} ккал | Б: {item.protein}г | Ж: {item.fat}г | В: {item.carbs}г
+                </span>
+              </div>
+            ))}
+            {res.totals && (
+              <div className="pt-2 border-t border-border/50 flex justify-between font-semibold text-foreground">
+                <span>Разом за запис:</span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {res.totals.calories} ккал (Б: {res.totals.protein}г | Ж: {res.totals.fat}г | В: {res.totals.carbs}г)
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (name === "search_foods") {
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <Search className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? `Пошук у базі: "${tool.args?.query || ""}"...`
+            : `Знайдено продуктів: ${(tool.result?.ingredients?.length || 0) + (tool.result?.recipes?.length || 0)}`}
+        </span>
+      </div>
+    );
+  }
+
+  if (name === "create_ingredient") {
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <PlusCircle className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? `Створення інгредієнта: "${tool.args?.name || ""}"...`
+            : `Створено новий інгредієнт: "${tool.result?.name || ""}"`}
+        </span>
+      </div>
+    );
+  }
+
+  if (name === "get_logged_meals") {
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <Calendar className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? `Перевірка записів за ${tool.args?.date || ""}...`
+            : `Знайдено ${tool.result?.count || 0} записів (${tool.result?.totals?.calories || 0} ккал)`}
+        </span>
+      </div>
+    );
+  }
+
+  if (name === "delete_logged_meal") {
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-1.5 text-xs text-destructive">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Trash2 className="h-3.5 w-3.5" />
+        )}
+        <span>
+          {isExecuting
+            ? "Видалення запису..."
+            : `Видалено: ${tool.result?.deletedName || "запис"}`}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-1 text-xs text-muted-foreground italic">
+      [{isExecuting ? "Виклик інструменту" : "Результат"}: {name}]
+    </div>
+  );
+}

@@ -26,6 +26,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.79",
+    "@ai-sdk/react": "^4.0.158",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.17.1",
@@ -45,6 +47,7 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "@types/csv-parse": "^1.1.12",
     "add": "^2.0.6",
+    "ai": "^7.0.154",
     "axios": "^1.12.2",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",

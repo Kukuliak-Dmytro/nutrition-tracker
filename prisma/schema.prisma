@@ -20,6 +20,7 @@ model User {
   recipes        Recipe[]
   foodLogEntries FoodLogEntry[]
   ingredients    Ingredient[]
+  chatSessions   ChatSession[]
 
   @@map("users")
 }
@@ -148,4 +149,31 @@ model DailyGoal {
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("daily_goals")
+}
+
+model ChatSession {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @db.Uuid @map("user_id")
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?       @default("New Chat")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id         String      @id @default(uuid()) @db.Uuid
+  sessionId  String      @db.Uuid @map("session_id")
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role       String      // 'user' | 'assistant' | 'tool' | 'system'
+  content    String      @db.Text
+  toolCalls  Json?       @map("tool_calls")
+  toolCallId String?     @map("tool_call_id")
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@map("chat_messages")
 }
