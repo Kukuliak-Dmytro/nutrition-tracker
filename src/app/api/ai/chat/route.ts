@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { isStepCount, streamText } from "ai";
+import { convertToModelMessages, isStepCount, streamText } from "ai";
 import { getSessionUserId } from "@/lib/auth";
 import prisma from "../../../../../utils/prisma/prisma";
 import { getAgentTools } from "@/lib/ai/tools";
@@ -36,11 +36,22 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const extractText = (msg: { content?: string; parts?: Array<{ type?: string; text?: string }> } | undefined): string => {
+      if (!msg) return "";
+      if (typeof msg.content === "string") return msg.content;
+      if (Array.isArray(msg.parts)) {
+        return msg.parts
+          .filter((p) => p.type === "text" && typeof p.text === "string")
+          .map((p) => p.text)
+          .join("\n");
+      }
+      return "";
+    };
+
     if (!activeSession) {
       const firstUserMsg = messages.find((m: { role: string }) => m.role === "user");
-      const title = firstUserMsg?.content
-        ? firstUserMsg.content.slice(0, 40)
-        : "Новий діалог";
+      const userText = extractText(firstUserMsg);
+      const title = userText ? userText.slice(0, 40) : "Новий діалог";
 
       activeSession = await prisma.chatSession.create({
         data: {
@@ -54,12 +65,13 @@ export async function POST(req: NextRequest) {
 
     // 2. Persist latest incoming user message
     const latestUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
-    if (latestUserMessage) {
+    const latestUserText = extractText(latestUserMessage);
+    if (latestUserText) {
       await prisma.chatMessage.create({
         data: {
           sessionId: currentSessionId,
           role: "user",
-          content: latestUserMessage.content || "",
+          content: latestUserText,
         },
       });
     }
@@ -68,12 +80,13 @@ export async function POST(req: NextRequest) {
     const tools = getAgentTools(userId);
     const systemPrompt = buildSystemPrompt({ currentDate, currentTime });
     const model = getLLMModel();
+    const modelMessages = await convertToModelMessages(messages);
 
     // 4. Stream turn with agentic tool loop
     const result = streamText({
       model,
       system: systemPrompt,
-      messages,
+      messages: modelMessages,
       tools,
       stopWhen: isStepCount(5),
       onFinish: async (event) => {
