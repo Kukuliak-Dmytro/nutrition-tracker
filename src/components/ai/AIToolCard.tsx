@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Loader2, Search, PlusCircle, Trash2, Calendar } from "lucide-react";
+import { CheckCircle2, Loader2, Search, PlusCircle, Trash2, Calendar, Utensils } from "lucide-react";
 
 interface LoggedEntry {
   name: string;
@@ -21,6 +21,13 @@ interface LoggedResult {
     carbs: number;
   };
   count?: number;
+  dishes?: Array<{
+    id: string;
+    name: string;
+    servings?: number;
+    cookedWeightGrams?: number | null;
+    caloriesPer100g?: number | null;
+  }>;
   ingredients?: unknown[];
   recipes?: unknown[];
   name?: string;
@@ -72,6 +79,23 @@ export function AIToolCard({ tool }: { tool: ToolInvocation }) {
             )}
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (name === "get_available_dishes") {
+    return (
+      <div className="my-1.5 flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+        {isExecuting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+        ) : (
+          <Utensils className="h-3.5 w-3.5 text-primary" />
+        )}
+        <span>
+          {isExecuting
+            ? "Перевіряю доступні страви в наявності..."
+            : `Знайдено ${tool.result?.count ?? 0} готових страв у наявності`}
+        </span>
       </div>
     );
   }

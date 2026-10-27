@@ -2,6 +2,11 @@ import { tool } from "ai";
 import { z } from "zod";
 import prisma from "../../../utils/prisma/prisma";
 import { MealType } from "@prisma/client";
+import {
+  calculateRecipeNutritionData,
+  calculateCookedNutritionPer100g,
+  calculatePortionNutrition,
+} from "../../../utils/calculations/nutrition";
 
 export function getAgentTools(userId: string) {
   return {
@@ -9,17 +14,21 @@ export function getAgentTools(userId: string) {
       description:
         "Шукає продукти та страви в базі даних за назвою (серед загальних інгредієнтів та власних рецептів користувача).",
       inputSchema: z.object({
-        query: z.string().describe("Назва продукту або страви, наприклад 'гречка', 'куряче філе'"),
+        query: z.string().describe("Назва продукту або страви, наприклад 'гречка', 'куряче філе', 'паста з креветками'"),
       }),
       execute: async ({ query }: { query: string }) => {
         try {
+          const kw = extractSearchKeywords(query);
           const [ingredients, recipes] = await Promise.all([
             prisma.ingredient.findMany({
               where: {
-                OR: [{ userId: null }, { userId }],
-                name: { contains: query, mode: "insensitive" },
+                OR: [
+                  { name: { contains: query, mode: "insensitive" } },
+                  ...kw.map((k) => ({ name: { contains: k, mode: "insensitive" as const } })),
+                ],
+                AND: [{ OR: [{ userId: null }, { userId }] }],
               },
-              take: 6,
+              take: 8,
               select: {
                 id: true,
                 name: true,
@@ -34,20 +43,38 @@ export function getAgentTools(userId: string) {
             prisma.recipe.findMany({
               where: {
                 userId,
-                name: { contains: query, mode: "insensitive" },
+                OR: [
+                  { name: { contains: query, mode: "insensitive" } },
+                  ...kw.map((k) => ({ name: { contains: k, mode: "insensitive" as const } })),
+                ],
               },
-              take: 4,
-              select: {
-                id: true,
-                name: true,
-                servings: true,
-                cookedWeightGrams: true,
+              take: 6,
+              include: {
+                ingredients: {
+                  include: {
+                    ingredient: true,
+                  },
+                },
               },
             }),
           ]);
 
+          const score = (name: string) => {
+            const lower = name.toLowerCase();
+            let s = 0;
+            if (lower === query.toLowerCase()) s += 10;
+            if (lower.includes(query.toLowerCase())) s += 5;
+            for (const k of kw) {
+              if (lower.includes(k)) s += 2;
+            }
+            return s;
+          };
+
+          ingredients.sort((a, b) => score(b.name) - score(a.name));
+          recipes.sort((a, b) => score(b.name) - score(a.name));
+
           return {
-            ingredients: ingredients.map((ing) => ({
+            ingredients: ingredients.slice(0, 5).map((ing) => ({
               id: ing.id,
               name: ing.name,
               caloriesPer100g: Number(ing.caloriesPer100g),
@@ -57,16 +84,87 @@ export function getAgentTools(userId: string) {
               fiberPer100g: Number(ing.fiberPer100g),
               category: ing.category,
             })),
-            recipes: recipes.map((r) => ({
-              id: r.id,
-              name: r.name,
-              servings: r.servings,
-              cookedWeightGrams: r.cookedWeightGrams ? Number(r.cookedWeightGrams) : null,
-            })),
+            recipes: recipes.slice(0, 5).map((r) => {
+              const totalNutrition = calculateRecipeNutritionData(r);
+              const totalRawWeight = (r.ingredients || []).reduce(
+                (sum, i) => sum + Number(i.quantityGrams),
+                0
+              );
+              const cookedWeight = r.cookedWeightGrams ? Number(r.cookedWeightGrams) : totalRawWeight;
+              const per100g = cookedWeight > 0
+                ? calculateCookedNutritionPer100g(totalNutrition, cookedWeight)
+                : totalNutrition;
+
+              return {
+                id: r.id,
+                name: r.name,
+                servings: r.servings,
+                cookedWeightGrams: cookedWeight,
+                caloriesPer100g: per100g.calories,
+                proteinPer100g: per100g.protein,
+                fatPer100g: per100g.fat,
+                carbsPer100g: per100g.carbs,
+                fiberPer100g: per100g.fiber,
+              };
+            }),
           };
         } catch (error) {
           console.error("search_foods tool error:", error);
           return { error: "Не вдалося виконати пошук у базі даних" };
+        }
+      },
+    }),
+
+    get_available_dishes: tool({
+      description:
+        "Отримує список усіх приготованих і доступних (не архівованих, статус RECENT) домашніх страв і рецептів користувача, які зараз є в наявності (в холодильнику).",
+      inputSchema: z.object({}),
+      execute: async () => {
+        try {
+          const recipes = await prisma.recipe.findMany({
+            where: {
+              userId,
+              status: "RECENT",
+            },
+            include: {
+              ingredients: {
+                include: {
+                  ingredient: true,
+                },
+              },
+            },
+            orderBy: { updatedAt: "desc" },
+          });
+
+          return {
+            count: recipes.length,
+            dishes: recipes.map((r) => {
+              const totalNutrition = calculateRecipeNutritionData(r);
+              const totalRawWeight = (r.ingredients || []).reduce(
+                (sum, i) => sum + Number(i.quantityGrams),
+                0
+              );
+              const cookedWeight = r.cookedWeightGrams ? Number(r.cookedWeightGrams) : totalRawWeight;
+              const per100g = cookedWeight > 0
+                ? calculateCookedNutritionPer100g(totalNutrition, cookedWeight)
+                : totalNutrition;
+
+              return {
+                id: r.id,
+                name: r.name,
+                servings: r.servings,
+                cookedWeightGrams: cookedWeight,
+                caloriesPer100g: per100g.calories,
+                proteinPer100g: per100g.protein,
+                fatPer100g: per100g.fat,
+                carbsPer100g: per100g.carbs,
+                fiberPer100g: per100g.fiber,
+              };
+            }),
+          };
+        } catch (error) {
+          console.error("get_available_dishes error:", error);
+          return { error: "Не вдалося отримати список доступних страв" };
         }
       },
     }),
@@ -220,20 +318,132 @@ export function getAgentTools(userId: string) {
             let carbs = item.carbs ?? 0;
             let fat = item.fat ?? 0;
             let fiber = item.fiber ?? 0;
+            let matchedRecipeId = item.recipeId;
             let matchedIngredientId = item.ingredientId;
 
-            // If macros were not provided, calculate from ingredient
-            if (calories === 0 && weightGramsValid(item.weightGrams)) {
+            // 1. If recipeId provided, calculate nutrition from recipe if calories not provided
+            if (matchedRecipeId && calories === 0 && weightGramsValid(item.weightGrams)) {
+              const recipe = await prisma.recipe.findUnique({
+                where: { id: matchedRecipeId },
+                include: {
+                  ingredients: {
+                    include: {
+                      ingredient: true,
+                    },
+                  },
+                },
+              });
+              if (recipe) {
+                const totalNutrition = calculateRecipeNutritionData(recipe);
+                const totalRawWeight = (recipe.ingredients || []).reduce(
+                  (sum, i) => sum + Number(i.quantityGrams),
+                  0
+                );
+                const cookedWeight = recipe.cookedWeightGrams
+                  ? Number(recipe.cookedWeightGrams)
+                  : totalRawWeight;
+                const per100g = cookedWeight > 0
+                  ? calculateCookedNutritionPer100g(totalNutrition, cookedWeight)
+                  : totalNutrition;
+                const portion = calculatePortionNutrition(per100g, item.weightGrams);
+                calories = portion.calories;
+                protein = portion.protein;
+                carbs = portion.carbs;
+                fat = portion.fat;
+                fiber = portion.fiber;
+              }
+            }
+
+            // 2. If neither recipeId nor ingredientId, search recipes first by name using keywords
+            if (!matchedRecipeId && !matchedIngredientId && weightGramsValid(item.weightGrams)) {
+              const kw = extractSearchKeywords(item.name);
+              const candidates = await prisma.recipe.findMany({
+                where: {
+                  userId,
+                  OR: [
+                    { name: { contains: item.name, mode: "insensitive" } },
+                    ...kw.map((k) => ({ name: { contains: k, mode: "insensitive" as const } })),
+                  ],
+                },
+                include: {
+                  ingredients: {
+                    include: {
+                      ingredient: true,
+                    },
+                  },
+                },
+                take: 6,
+              });
+
+              if (candidates.length > 0) {
+                const score = (name: string) => {
+                  const lower = name.toLowerCase();
+                  let s = 0;
+                  if (lower === item.name.toLowerCase()) s += 10;
+                  if (lower.includes(item.name.toLowerCase())) s += 5;
+                  for (const k of kw) {
+                    if (lower.includes(k)) s += 2;
+                  }
+                  return s;
+                };
+                candidates.sort((a, b) => score(b.name) - score(a.name));
+                const recipe = candidates[0];
+
+                matchedRecipeId = recipe.id;
+                if (calories === 0) {
+                  const totalNutrition = calculateRecipeNutritionData(recipe);
+                  const totalRawWeight = (recipe.ingredients || []).reduce(
+                    (sum, i) => sum + Number(i.quantityGrams),
+                    0
+                  );
+                  const cookedWeight = recipe.cookedWeightGrams
+                    ? Number(recipe.cookedWeightGrams)
+                    : totalRawWeight;
+                  const per100g = cookedWeight > 0
+                    ? calculateCookedNutritionPer100g(totalNutrition, cookedWeight)
+                    : totalNutrition;
+                  const portion = calculatePortionNutrition(per100g, item.weightGrams);
+                  calories = portion.calories;
+                  protein = portion.protein;
+                  carbs = portion.carbs;
+                  fat = portion.fat;
+                  fiber = portion.fiber;
+                }
+              }
+            }
+
+            // 3. If still no recipe and calories === 0, calculate from ingredient using keywords
+            if (!matchedRecipeId && calories === 0 && weightGramsValid(item.weightGrams)) {
               let ing = null;
               if (matchedIngredientId) {
                 ing = await prisma.ingredient.findUnique({ where: { id: matchedIngredientId } });
               } else {
-                ing = await prisma.ingredient.findFirst({
+                const kw = extractSearchKeywords(item.name);
+                const candidates = await prisma.ingredient.findMany({
                   where: {
-                    name: { contains: item.name, mode: "insensitive" },
-                    OR: [{ userId: null }, { userId }],
+                    OR: [
+                      { name: { contains: item.name, mode: "insensitive" } },
+                      ...kw.map((k) => ({ name: { contains: k, mode: "insensitive" as const } })),
+                    ],
+                    AND: [{ OR: [{ userId: null }, { userId }] }],
                   },
+                  take: 6,
                 });
+
+                if (candidates.length > 0) {
+                  const score = (name: string) => {
+                    const lower = name.toLowerCase();
+                    let s = 0;
+                    if (lower === item.name.toLowerCase()) s += 10;
+                    if (lower.includes(item.name.toLowerCase())) s += 5;
+                    for (const k of kw) {
+                      if (lower.includes(k)) s += 2;
+                    }
+                    return s;
+                  };
+                  candidates.sort((a, b) => score(b.name) - score(a.name));
+                  ing = candidates[0];
+                }
               }
 
               if (ing) {
@@ -260,7 +470,7 @@ export function getAgentTools(userId: string) {
                 fat,
                 fiber,
                 ingredientId: matchedIngredientId || null,
-                recipeId: item.recipeId || null,
+                recipeId: matchedRecipeId || null,
               },
             });
 
@@ -385,4 +595,37 @@ export function getAgentTools(userId: string) {
 
 function weightGramsValid(w: unknown): w is number {
   return typeof w === "number" && !isNaN(w) && w > 0;
+}
+
+function extractSearchKeywords(query: string): string[] {
+  const stopwords = new Set([
+    "з", "зі", "із", "та", "і", "й", "в", "у", "на", "до", "по", "під", "для", "про", "без", "від", "через", "грам", "грамів", "г", "порція", "порції", "з'їв", "зїла", "з'їла", "зїв"
+  ]);
+  const clean = query.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, " ").toLowerCase();
+  const words = clean.split(/\s+/).filter((w) => w.length >= 2 && !stopwords.has(w));
+
+  const keywords: string[] = [];
+  const endings = [
+    "ами", "ями", "ими", "ого", "ому", "ої", "ій",
+    "их", "ах", "ях", "ем", "ом", "ам", "ям",
+    "ів", "ев", "єю", "ою", "ий", "ій",
+    "ка", "ки", "ку", "ком", "ці",
+    "а", "е", "и", "і", "о", "у", "я", "є", "ю"
+  ];
+
+  for (const word of words) {
+    keywords.push(word);
+    let stemmed = word;
+    for (const ending of endings) {
+      if (word.length - ending.length >= 3 && word.endsWith(ending)) {
+        stemmed = word.slice(0, -ending.length);
+        break;
+      }
+    }
+    if (stemmed !== word && stemmed.length >= 3) {
+      keywords.push(stemmed);
+    }
+  }
+
+  return Array.from(new Set(keywords));
 }
