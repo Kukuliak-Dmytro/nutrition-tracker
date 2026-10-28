@@ -11,10 +11,9 @@ import {
 export function getAgentTools(userId: string) {
   return {
     search_foods: tool({
-      description:
-        "Шукає продукти та страви в базі даних за назвою (серед загальних інгредієнтів та власних рецептів користувача).",
+      description: "Пошук продуктів та страв у базі за назвою.",
       inputSchema: z.object({
-        query: z.string().describe("Назва продукту або страви, наприклад 'гречка', 'куряче філе', 'паста з креветками'"),
+        query: z.string().describe("Назва для пошуку"),
       }),
       execute: async ({ query }: { query: string }) => {
         try {
@@ -117,7 +116,7 @@ export function getAgentTools(userId: string) {
 
     get_available_dishes: tool({
       description:
-        "Отримує список усіх приготованих і доступних домашніх страв і рецептів користувача (Dish, Recipe), які зараз є в наявності (в холодильнику, залишки їжі, що лишилося, що не доїв). Обов'язково викликай цей інструмент для запитів на кшталт «що лишилося з їжі?», «що є поїсти?», «що в холодильнику?», «що я не доїв?».",
+        "Отримує список приготованих страв і залишків їжі в холодильнику (що лишилося, що є з їжі, що не доїв).",
       inputSchema: z.object({}),
       execute: async () => {
         try {
@@ -165,42 +164,6 @@ export function getAgentTools(userId: string) {
         } catch (error) {
           console.error("get_available_dishes error:", error);
           return { error: "Не вдалося отримати список доступних страв" };
-        }
-      },
-    }),
-
-    search_web_nutrition: tool({
-      description:
-        "Пошук харчової цінності невідомих продуктів у відкритій базі Open Food Facts, якщо їх немає в базі даних.",
-      inputSchema: z.object({
-        food_name: z.string().describe("Назва продукту англійською або українською"),
-      }),
-      execute: async ({ food_name }: { food_name: string }) => {
-        try {
-          const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-            food_name
-          )}&search_simple=1&action=process&json=1`;
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 4000);
-          const res = await fetch(url, { signal: controller.signal });
-          clearTimeout(timeout);
-
-          if (!res.ok) return { found: false };
-          const data = await res.json();
-          const product = data.products?.[0];
-          if (!product) return { found: false };
-
-          return {
-            found: true,
-            name: product.product_name || food_name,
-            caloriesPer100g: Math.round(Number(product.nutriments?.["energy-kcal_100g"] ?? 0)),
-            proteinPer100g: Number(product.nutriments?.proteins_100g ?? 0),
-            carbsPer100g: Number(product.nutriments?.carbohydrates_100g ?? 0),
-            fatPer100g: Number(product.nutriments?.fat_100g ?? 0),
-            fiberPer100g: Number(product.nutriments?.fiber_100g ?? 0),
-          };
-        } catch {
-          return { found: false };
         }
       },
     }),
@@ -270,24 +233,23 @@ export function getAgentTools(userId: string) {
     }),
 
     log_food_entry: tool({
-      description:
-        "Записує спожиті страви/продукти у щоденник харчування користувача за обраний прийом їжі та дату.",
+      description: "Записує спожиту їжу користувача за обраний прийом та дату.",
       inputSchema: z.object({
-        date: z.string().describe("Дата у форматі YYYY-MM-DD"),
+        date: z.string().describe("YYYY-MM-DD"),
         mealType: z
           .enum(["BREAKFAST", "SNACK_1", "LUNCH", "SNACK_2", "DINNER"])
-          .describe("Прийом їжі: BREAKFAST (сніданок), SNACK_1 (перекус 1), LUNCH (обід), SNACK_2 (перекус 2), DINNER (вечеря)"),
+          .describe("BREAKFAST | SNACK_1 | LUNCH | SNACK_2 | DINNER"),
         items: z.array(
           z.object({
-            name: z.string().describe("Назва продукту або страви"),
+            name: z.string().describe("Назва"),
             weightGrams: z.number().describe("Вага в грамах"),
-            calories: z.number().optional().describe("Розраховані калорії для цієї ваги"),
-            protein: z.number().optional().describe("Розраховані білки для цієї ваги"),
-            carbs: z.number().optional().describe("Розраховані вуглеводи для цієї ваги"),
-            fat: z.number().optional().describe("Розраховані жири для цієї ваги"),
-            fiber: z.number().optional().default(0).describe("Клітковина"),
-            ingredientId: z.string().optional().describe("ID інгредієнта з бази, якщо знайдено"),
-            recipeId: z.string().optional().describe("ID рецепту з бази, якщо знайдено"),
+            calories: z.number().optional().describe("Калорії"),
+            protein: z.number().optional().describe("Білки"),
+            carbs: z.number().optional().describe("Вуглеводи"),
+            fat: z.number().optional().describe("Жири"),
+            fiber: z.number().optional().default(0),
+            ingredientId: z.string().optional(),
+            recipeId: z.string().optional(),
           })
         ),
       }),
@@ -570,8 +532,7 @@ export function getAgentTools(userId: string) {
     }),
 
     get_nutrition_goals: tool({
-      description:
-        "Отримує поточні цілі харчування користувача (стратегію: схуднення / набір / підтримка, базову підтримку ваги maintenanceCalories, планову калорійність targetCalories, плановий дефіцит або профіцит та цільові грами білків, жирів, вуглеводів і клітковини).",
+      description: "Отримує поточні цілі калорій та БЖВ користувача.",
       inputSchema: z.object({}),
       execute: async () => {
         try {
@@ -618,16 +579,15 @@ export function getAgentTools(userId: string) {
     }),
 
     update_nutrition_goals: tool({
-      description:
-        "Оновлює цілі харчування користувача (стратегію goalType, планові калорії, калорії підтримки, норми білків, жирів, вуглеводів, клітковини).",
+      description: "Оновлює цілі харчування користувача (калорії, підтримку, БЖВ).",
       inputSchema: z.object({
-        goalType: z.enum(["WEIGHT_LOSS", "MUSCLE_GAIN", "MAINTENANCE"]).optional().describe("Стратегія: WEIGHT_LOSS (схуднення), MUSCLE_GAIN (набір), MAINTENANCE (підтримка)"),
-        calories: z.number().optional().describe("Цільова добова калорійність"),
-        maintenanceCalories: z.number().optional().describe("Базова калорійність підтримки ваги"),
-        protein: z.number().optional().describe("Цільовий білок в грамах"),
-        fat: z.number().optional().describe("Цільові жири в грамах"),
-        carbs: z.number().optional().describe("Цільові вуглеводи в грамах"),
-        fiber: z.number().optional().describe("Цільова клітковина в грамах"),
+        goalType: z.enum(["WEIGHT_LOSS", "MUSCLE_GAIN", "MAINTENANCE"]).optional().describe("WEIGHT_LOSS | MUSCLE_GAIN | MAINTENANCE"),
+        calories: z.number().optional().describe("Цільові калорії"),
+        maintenanceCalories: z.number().optional().describe("Калорії підтримки"),
+        protein: z.number().optional().describe("Білки (г)"),
+        fat: z.number().optional().describe("Жири (г)"),
+        carbs: z.number().optional().describe("Вуглеводи (г)"),
+        fiber: z.number().optional().describe("Клітковина (г)"),
       }),
       execute: async (args: {
         goalType?: "WEIGHT_LOSS" | "MUSCLE_GAIN" | "MAINTENANCE";
@@ -676,7 +636,7 @@ export function getAgentTools(userId: string) {
 
     get_weight_loss_progress: tool({
       description:
-        "Отримує точний розрахунок прогресу схуднення, втрати жиру та сумарного дефіциту калорій користувача від початку ведення щоденника. ВИКОРИСТОВУЙ ЦЕЙ ІНСТРУМЕНТ, коли користувач запитує: 'на скільки я схуднув?', 'який у мене дефіцит?', 'чи скидаю я вагу?', 'скільки жиру я спалив?', 'який мій прогрес?'.",
+        "Отримує прогрес схуднення, втрати жиру (кг) та сумарного дефіциту калорій користувача від початку ведення щоденника.",
       inputSchema: z.object({}),
       execute: async () => {
         try {
@@ -750,15 +710,15 @@ export function getAgentTools(userId: string) {
 
     get_nutrition_summary: tool({
       description:
-        "Отримує точну аналітику споживання їжі (суми та середньодобові значення КБЖВ, розбивку по тижнях або днях) за вибраний період: останні 7 днів, місяць, по тижнях або весь час. НЕ використовуй для пошуку залишків їжі, страв у наявності чи того, що користувач приготував і не доїв!",
+        "Отримує аналітику споживання калорій та БЖВ за період (останні 7 днів, 30 днів, по тижнях або весь час). Не використовувати для залишків їжі.",
       inputSchema: z.object({
         period: z
           .enum(["last_7_days", "last_30_days", "by_weeks", "all_time"])
           .optional()
           .default("last_7_days")
-          .describe("Період аналітики: 'all_time' (за весь час від початку ведення щоденника / з початку рахування калорій), 'last_7_days' (останні 7 днів), 'last_30_days' (останній місяць), 'by_weeks' (по тижнях). Якщо запит містить 'з початку', 'за весь час' — обирай 'all_time'."),
-        startDate: z.string().nullable().optional().describe("Початкова дата YYYY-MM-DD"),
-        endDate: z.string().nullable().optional().describe("Кінцева дата YYYY-MM-DD"),
+          .describe("last_7_days | last_30_days | by_weeks | all_time"),
+        startDate: z.string().nullable().optional().describe("YYYY-MM-DD"),
+        endDate: z.string().nullable().optional().describe("YYYY-MM-DD"),
       }),
       execute: async ({ period, startDate, endDate }: { period?: "last_7_days" | "last_30_days" | "by_weeks" | "all_time"; startDate?: string | null; endDate?: string | null }) => {
         try {

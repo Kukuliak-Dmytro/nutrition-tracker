@@ -7,7 +7,7 @@ import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import { getLLMModel } from "@/lib/ai/adapter";
 import { aiLogger } from "@/lib/ai/logger";
 
-export const maxDuration = 60; // Allow up to 60s for agentic tool loops
+export const maxDuration = 300; // Allow up to 300s for agentic tool loops
 
 export async function POST(req: NextRequest) {
   let currentSessionId: string | undefined;
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages, sessionId, currentDate, currentTime } = body;
+    const { messages, sessionId, currentDate } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "Messages array is required" }), {
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Setup agent tools and system prompt
     const rawTools = getAgentTools(userId);
-    const systemPrompt = buildSystemPrompt({ currentDate, currentTime });
+    const systemPrompt = buildSystemPrompt({ currentDate });
     const model = getLLMModel();
     const modelMessages = await convertToModelMessages(messages);
 
