@@ -6,7 +6,7 @@ export function getLLMModel() {
     process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
 
   if (geminiApiKey && geminiApiKey.trim().length > 0) {
-    const geminiModel = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+    const geminiModel = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
     const google = createGoogleGenerativeAI({
       apiKey: geminiApiKey.trim(),
     });
@@ -30,10 +30,21 @@ export function getActiveModelInfo() {
     process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
 
   if (geminiApiKey && geminiApiKey.trim().length > 0) {
-    const geminiModel = process.env.GEMINI_MODEL || "gemini-3.5-flash";
-    let displayName = "Gemini Flash";
-    if (geminiModel.includes("3.8")) displayName = "Gemini 3.8 Flash";
-    else if (geminiModel.includes("3.5")) displayName = "Gemini 3.5 Flash";
+    const geminiModel = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+    let displayName = "Gemini Cloud";
+    if (geminiModel.includes("3.5") && geminiModel.includes("lite")) {
+      displayName = "Gemini 3.5 Flash Lite";
+    } else if (geminiModel.includes("3.1") && geminiModel.includes("lite")) {
+      displayName = "Gemini 3.1 Flash Lite";
+    } else if (geminiModel.includes("3.8")) {
+      displayName = "Gemini 3.8 Flash";
+    } else if (geminiModel.includes("3.6")) {
+      displayName = "Gemini 3.6 Flash";
+    } else if (geminiModel.includes("3.5")) {
+      displayName = "Gemini 3.5 Flash";
+    } else {
+      displayName = `Gemini (${geminiModel})`;
+    }
 
     return {
       provider: "google",
