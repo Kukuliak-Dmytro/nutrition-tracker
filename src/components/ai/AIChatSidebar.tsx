@@ -148,6 +148,20 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
 
   const isGenerating = status === "streaming" || status === "submitted";
 
+  const [modelInfo, setModelInfo] = useState<{ displayName: string; isCloud: boolean }>({
+    displayName: "Gemini 3.5 Flash",
+    isCloud: true,
+  });
+
+  useEffect(() => {
+    fetch("/api/ai/model")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.displayName) setModelInfo(data);
+      })
+      .catch(() => {});
+  }, []);
+
   // Auto-scroll to bottom on new message
   useEffect(() => {
     if (isOpen) {
@@ -195,9 +209,19 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-semibold text-foreground">AI Щоденник</h2>
-                <span className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Qwen 2.5 3B Local
+                <span
+                  className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                    modelInfo.isCloud
+                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      modelInfo.isCloud ? "bg-blue-500" : "bg-emerald-500"
+                    } animate-pulse`}
+                  />
+                  {modelInfo.displayName}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground">Швидке логування їжі людською мовою</p>
