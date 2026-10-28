@@ -31,7 +31,7 @@ services:
     volumes:
       - nutrition_ollama_data:/root/.ollama
     environment:
-      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_KEEP_ALIVE=5m
     logging:
       driver: "json-file"
       options:
@@ -57,6 +57,7 @@ services:
       DIRECT_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cals.dvkplay.com}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-nutrition-agent:7b}
     env_file:
       - path: .env
         required: false
