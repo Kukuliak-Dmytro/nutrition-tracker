@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
 
     // Track all tool executions to prevent calling the exact same tool with identical parameters
     const executedToolKeys = new Set<string>();
+    const executionCache = new Map<string, unknown>();
     let hadConsecutiveDuplicate = false;
 
     function canonicalArgsKey(args: unknown): string {
@@ -139,13 +140,17 @@ export async function POST(req: NextRequest) {
           const toolCallKey = `${toolName}:${argsKey}`;
           if (executedToolKeys.has(toolCallKey)) {
             hadConsecutiveDuplicate = true;
-            return {
-              isDuplicateConsecutive: true,
-              message: `Інструмент "${toolName}" вже був викликаний раніше з ідентичними параметрами. Повторні виклики заборонені. Сформулюй фінальну відповідь користувачу на основі вже отриманих даних.`,
-            };
+            const cached = executionCache.get(toolCallKey);
+            return (
+              cached ?? {
+                isDuplicateConsecutive: true,
+              }
+            );
           }
           executedToolKeys.add(toolCallKey);
-          return originalExecute(args, options);
+          const execRes = await originalExecute(args, options);
+          executionCache.set(toolCallKey, execRes);
+          return execRes;
         },
       };
     }
