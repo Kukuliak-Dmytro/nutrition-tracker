@@ -10,7 +10,7 @@ function createPrismaClient() {
     const isLocal = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
     const errorMessage = isLocal
       ? 'DATABASE_URL environment variable is missing.\n' +
-        'Please run "npm run setup:db" to set up your local database, or create a .env file with your database connection string.'
+        'Please run "yarn setup:db" to set up your local database, or create a .env file with your database connection string.'
       : 'DATABASE_URL environment variable is missing. ' +
         'Please set it in your environment variables.';
     throw new Error(errorMessage);

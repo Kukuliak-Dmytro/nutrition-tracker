@@ -55,7 +55,7 @@ services:
       HOSTNAME: "0.0.0.0"
       DATABASE_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
       DIRECT_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://cals.dvkplay.com}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://track.dvkpowered.org}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-nutrition-agent:3b}
       GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_GENERATIVE_AI_API_KEY:-}

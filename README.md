@@ -23,7 +23,7 @@ pnpm install
 The project includes automated database setup scripts. Simply run:
 
 ```bash
-npm run dev
+yarn dev
 ```
 
 This will automatically:
@@ -38,16 +38,16 @@ This will automatically:
 
 ```bash
 # Set up database (creates container, runs migrations)
-npm run setup:db
+yarn setup:db
 
 # Or manage the database manually:
-npm run db:start      # Start PostgreSQL container
-npm run db:stop       # Stop PostgreSQL container
-npm run db:restart    # Restart PostgreSQL container
-npm run db:migrate    # Run migrations only
-npm run db:generate   # Generate Prisma Client only
-npm run db:studio     # Open Prisma Studio (database GUI)
-npm run db:reset      # Reset database (WARNING: deletes all data)
+yarn db:start      # Start PostgreSQL container
+yarn db:stop       # Stop PostgreSQL container
+yarn db:restart    # Restart PostgreSQL container
+yarn db:migrate    # Run migrations only
+yarn db:generate   # Generate Prisma Client only
+yarn db:studio     # Open Prisma Studio (database GUI)
+yarn db:reset      # Reset database (WARNING: deletes all data)
 ```
 
 ### 3. Environment Variables
@@ -64,11 +64,7 @@ If you need to customize these values, edit the `.env` file after it's created.
 ### 4. Run Development Server
 
 ```bash
-npm run dev
-# or
 yarn dev
-# or
-pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

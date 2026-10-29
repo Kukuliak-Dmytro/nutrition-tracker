@@ -1,14 +1,15 @@
-# Deployment, Server & Subdomain Guidelines for Nutrition Tracker
+# Deployment, Server & Subdomain Guidelines for dvkTrack (Nutrition Tracker)
 
-This guide defines the deployment architecture, host server configuration, CI/CD pipeline, and subdomain routing for `nutrition-tracker` running on the shared Mini PC host alongside `vechornytsi`.
+This guide defines the deployment architecture, host server configuration, CI/CD pipeline, and subdomain routing for `nutrition-tracker` running on the shared Mini PC host within the DVK Powered ecosystem.
 
 ---
 
 ## 1. Project URLs & Repository
 
-- **Target Production URL / Subdomain**: `https://nutrition.dvkplay.com` (or another designated subdomain on `dvkplay.com`).
+- **Target Production URL / Subdomain**: `https://track.dvkpowered.org`
 - **GitHub Repository**: [https://github.com/Kukuliak-Dmytro/nutrition-tracker](https://github.com/Kukuliak-Dmytro/nutrition-tracker)
   - SSH Git: `git@github.com:Kukuliak-Dmytro/nutrition-tracker.git`
+- **Umbrella Hub**: [https://dvkpowered.org](https://dvkpowered.org)
 - **Primary Tech Stack**: Next.js 15, Prisma ORM, PostgreSQL 16, TailwindCSS, next-intl.
 
 ---
@@ -49,13 +50,13 @@ The application runs on the same physical Mini PC server as `vechornytsi`.
 
 ## 4. Subdomain Routing via Cloudflare Tunnel & Nginx
 
-Public traffic to `https://nutrition.dvkplay.com` is secured and routed through Cloudflare:
+Public traffic to `https://track.dvkpowered.org` is secured and routed through Cloudflare:
 
 ### Option A: Cloudflare Zero Trust Tunnel Direct Route (Recommended & Simplest)
 1. The host already runs `cloudflared.service` with token `/etc/cloudflared/token`.
 2. In the **Cloudflare Zero Trust Dashboard** $\rightarrow$ **Networks** $\rightarrow$ **Tunnels** $\rightarrow$ select active tunnel $\rightarrow$ **Public Hostname**:
-   - **Subdomain**: `nutrition`
-   - **Domain**: `dvkplay.com`
+   - **Subdomain**: `track`
+   - **Domain**: `dvkpowered.org`
    - **Service Type**: `HTTP`
    - **URL**: `localhost:3001`
 3. Traffic goes directly to the Next.js container on port `3001` without needing extra SSL certificates on the host.
@@ -66,7 +67,7 @@ Create `/etc/nginx/sites-available/nutrition-tracker`:
 ```nginx
 server {
     listen 80;
-    server_name nutrition.dvkplay.com;
+    server_name track.dvkpowered.org;
 
     client_max_body_size 25M;
 
@@ -117,9 +118,9 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package.json yarn.lock ./
 COPY prisma ./prisma/
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # 2. Build Stage
 FROM node:20-alpine AS builder
@@ -134,7 +135,7 @@ RUN npx prisma generate
 # Build Next.js in standalone mode
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-RUN npm run build
+RUN yarn build
 
 # 3. Runner Stage
 FROM node:20-alpine AS runner
@@ -206,7 +207,7 @@ services:
       HOSTNAME: "0.0.0.0"
       DATABASE_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
       DIRECT_URL: postgresql://nutrition_user:nutrition_password@postgres:5432/nutrition_tracker?schema=public
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://nutrition.dvkplay.com}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://track.dvkpowered.org}
     env_file:
       - path: .env
         required: false
@@ -279,23 +280,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: "npm"
+          node-version: 22
+          cache: "yarn"
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Generate Prisma Client
         run: npx prisma generate
 
       - name: Lint
-        run: npm run lint
+        run: yarn lint
 
       - name: Type-Check (TypeScript)
-        run: npm run typecheck
+        run: yarn typecheck
 
   # ============================================================================
   # Stage 2: Deploy to Mini PC (Runs ONLY if Stage 1 passes!)
@@ -346,5 +347,5 @@ ssh minipc "cd projects/nutrition-tracker && docker compose exec -T app npx pris
 ssh minipc "systemctl status actions.runner.*nutrition*"
 
 # Healthcheck subdomain
-curl -Is https://nutrition.dvkplay.com
+curl -Is https://track.dvkpowered.org
 ```

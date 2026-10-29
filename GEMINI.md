@@ -8,13 +8,13 @@ Detailed server and deployment documentation is available in:
 
 ## Production, Infrastructure & Deployment Context
 
-- **Target Production URL**: `https://nutrition.dvkplay.com` (subdomain hosted on Cloudflare).
+- **Target Production URL**: `https://track.dvkpowered.org` (subdomain hosted on Cloudflare).
 - **GitHub Repository**: [https://github.com/Kukuliak-Dmytro/nutrition-tracker](https://github.com/Kukuliak-Dmytro/nutrition-tracker)
 - **Host Server (Mini PC)**:
   - Shared physical Ubuntu Mini PC host (also hosts `vechornytsi`).
   - SSH access: `ssh minipc` (user `setup`, LAN IP `192.168.0.103`).
   - Project directory on server: `/home/setup/projects/nutrition-tracker`.
-  - Node.js runtime: Managed by NVM (`source ~/.nvm/nvm.sh` before node/npm commands via SSH).
+  - Node.js runtime: Managed by NVM (`source ~/.nvm/nvm.sh` before node/yarn commands via SSH).
 - **Port Allocation & Conflict Prevention**:
   - `vechornytsi` already occupies ports `3000` (app) and `5432` (db).
   - **`nutrition-tracker` MUST strictly use:**
@@ -23,13 +23,13 @@ Detailed server and deployment documentation is available in:
     - Container names: `nutrition_tracker_app`, `nutrition_tracker_db`.
 - **Cloudflare Routing & Subdomain**:
   - The server runs `cloudflared.service` (token at `/etc/cloudflared/token`).
-  - In Cloudflare Zero Trust: configure Public Hostname `nutrition.dvkplay.com` $\rightarrow$ `http://localhost:3001`.
+  - In Cloudflare Zero Trust: configure Public Hostname `track.dvkpowered.org` $\rightarrow$ `http://localhost:3001`.
 - **Git & Branching Strategy**:
   - `dev`: Active development branch for new features and bug fixes.
   - `main`: Production branch. Merged from `dev`. Pushing to `main` triggers automated CI/CD.
-  - Always verify with `npm run lint && npm run typecheck` before merging into `main`.
+  - Always verify with `yarn lint && yarn typecheck` before merging into `main`.
 - **CI/CD Pipeline (`.github/workflows/deploy.yml`)**:
-  - **Stage 1 (`verify`)**: Runs on `ubuntu-latest` (`npm ci`, `npx prisma generate`, `npm run lint`, `npm run typecheck`).
+  - **Stage 1 (`verify`)**: Runs on `ubuntu-latest` (`yarn install --frozen-lockfile`, `npx prisma generate`, `yarn lint`, `yarn typecheck`).
   - **Stage 2 (`deploy`)**: Runs on `[self-hosted, minipc-nutrition]` with `needs: [verify]`. If Stage 1 fails, deployment NEVER runs.
 - **Key Operations Commands**:
   - Check containers: `ssh minipc "docker ps --filter name=nutrition"`

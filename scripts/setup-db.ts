@@ -64,7 +64,7 @@ function waitForDatabase(maxAttempts = 30, delay = 1000): Promise<void> {
         );
         console.log("✓ Database is ready");
         resolve();
-      } catch (error) {
+      } catch {
         if (attempts >= maxAttempts) {
           reject(
             new Error("Database failed to become ready after maximum attempts")
@@ -169,7 +169,7 @@ async function main() {
       try {
         execSync(`docker start ${CONTAINER_NAME}`, { stdio: "inherit" });
         console.log("✓ Container started");
-      } catch (error) {
+      } catch {
         console.error(
           "Failed to start existing container. Creating new one..."
         );
@@ -211,7 +211,7 @@ GOOGLE_GENERATIVE_AI_API_KEY=""
   generatePrismaClient();
 
   console.log("\n✅ Database setup complete!");
-  console.log("You can now run: npm run dev");
+  console.log("You can now run: yarn dev");
 }
 
 main().catch((error) => {

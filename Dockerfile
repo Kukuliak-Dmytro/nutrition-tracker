@@ -3,9 +3,9 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package.json yarn.lock ./
 COPY prisma ./prisma/
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # 2. Build Stage
 FROM node:22-alpine AS builder
@@ -20,7 +20,7 @@ RUN npx prisma generate
 # Build Next.js in standalone mode
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-RUN npm run build
+RUN yarn build
 
 # 3. Runner Stage
 FROM node:22-alpine AS runner

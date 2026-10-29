@@ -1,9 +1,0 @@
-onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
-  - '@tailwindcss/oxide'
-  - msw
-  - prisma
-  - sharp
-  - supabase
-  - unrs-resolver
