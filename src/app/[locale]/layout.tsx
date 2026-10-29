@@ -51,8 +51,9 @@ export default async function LocaleLayout({
         <title>{t('title')}</title>
         <meta name="description" content={t('description')} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" />
+        <link rel="icon" href="/favicon-32x32.png?v=2" sizes="32x32" type="image/png" />
+        <link rel="alternate icon" href="/favicon.ico?v=2" />
       </head>
       <body className="h-screen overflow-hidden flex flex-col bg-background">
         <NextIntlClientProvider messages={messages}>
