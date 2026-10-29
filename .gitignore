@@ -32,10 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# lockfiles
 pnpm-workspace.yaml
 pnpm-lock.yaml
 package-lock.json
-yarn.lock
 
 
 # vercel
