@@ -96,10 +96,10 @@ export function DailyGoalsModal({
                 onClick={() => setValue("goalType", "WEIGHT_LOSS")}
                 className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                   selectedGoalType === "WEIGHT_LOSS"
-                    ? "bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500"
+                    ? "bg-primary/10 border-primary text-primary shadow-xs ring-1 ring-primary"
                     : "bg-muted/30 border-border/60 text-muted-foreground hover:bg-muted/70"
                 }`}>
-                <TrendingDown className="w-4 h-4 mb-1 text-emerald-500" />
+                <TrendingDown className={`w-4 h-4 mb-1 ${selectedGoalType === "WEIGHT_LOSS" ? "text-primary" : "text-muted-foreground"}`} />
                 <span>{t("weightLoss")}</span>
                 <span className="text-[10px] font-normal text-muted-foreground">{t("deficit")}</span>
               </button>
@@ -109,10 +109,10 @@ export function DailyGoalsModal({
                 onClick={() => setValue("goalType", "MUSCLE_GAIN")}
                 className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                   selectedGoalType === "MUSCLE_GAIN"
-                    ? "bg-purple-500/10 border-purple-500 text-purple-600 dark:text-purple-400 shadow-xs ring-1 ring-purple-500"
+                    ? "bg-primary/10 border-primary text-primary shadow-xs ring-1 ring-primary"
                     : "bg-muted/30 border-border/60 text-muted-foreground hover:bg-muted/70"
                 }`}>
-                <TrendingUp className="w-4 h-4 mb-1 text-purple-500" />
+                <TrendingUp className={`w-4 h-4 mb-1 ${selectedGoalType === "MUSCLE_GAIN" ? "text-primary" : "text-muted-foreground"}`} />
                 <span>{t("muscleGain")}</span>
                 <span className="text-[10px] font-normal text-muted-foreground">{t("surplus")}</span>
               </button>
@@ -122,10 +122,10 @@ export function DailyGoalsModal({
                 onClick={() => setValue("goalType", "MAINTENANCE")}
                 className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                   selectedGoalType === "MAINTENANCE"
-                    ? "bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 shadow-xs ring-1 ring-blue-500"
+                    ? "bg-primary/10 border-primary text-primary shadow-xs ring-1 ring-primary"
                     : "bg-muted/30 border-border/60 text-muted-foreground hover:bg-muted/70"
                 }`}>
-                <Scale className="w-4 h-4 mb-1 text-blue-500" />
+                <Scale className={`w-4 h-4 mb-1 ${selectedGoalType === "MAINTENANCE" ? "text-primary" : "text-muted-foreground"}`} />
                 <span>{t("maintenance")}</span>
                 <span className="text-[10px] font-normal text-muted-foreground">{t("balance")}</span>
               </button>
@@ -183,15 +183,15 @@ export function DailyGoalsModal({
               <Sparkles className="w-4 h-4 text-primary shrink-0" />
               <span>
                 {diffVsMaintenance < 0 ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span className="text-status-deficit font-semibold">
                     {t("dailyDeficit", { calories: Math.abs(diffVsMaintenance) })}
                   </span>
                 ) : diffVsMaintenance > 0 ? (
-                  <span className="text-purple-600 dark:text-purple-400 font-semibold">
+                  <span className="text-status-surplus font-semibold">
                     {t("dailySurplus", { calories: diffVsMaintenance })}
                   </span>
                 ) : (
-                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                  <span className="font-semibold text-foreground">
                     {t("exactMaintenance")}
                   </span>
                 )}

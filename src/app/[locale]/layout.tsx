@@ -13,7 +13,7 @@ import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 
 const inter = Inter({
-  subsets: ['latin'],
+  subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
   display: 'swap',
 });
@@ -51,7 +51,8 @@ export default async function LocaleLayout({
         <title>{t('title')}</title>
         <meta name="description" content={t('description')} />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico" />
       </head>
       <body className="h-screen overflow-hidden flex flex-col bg-background">
         <NextIntlClientProvider messages={messages}>

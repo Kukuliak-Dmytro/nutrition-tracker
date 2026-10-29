@@ -252,29 +252,21 @@ export default function IngredientsContentClient() {
                   </div>
                 </TableCell>
                 <TableCell className="py-4">
-                  <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-base">
-                    {ingredient.caloriesPer100g.toString()} {tMeals("kcal")}
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-muted/60 text-foreground font-semibold text-sm border border-border/40">
+                    {ingredient.caloriesPer100g.toString()} <span className="text-xs text-muted-foreground font-normal ml-1">{tMeals("kcal")}</span>
                   </span>
                 </TableCell>
-                <TableCell className="py-4">
-                  <span className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 font-semibold text-base">
-                    {ingredient.proteinPer100g.toString()}{tMeals("grams")}
-                  </span>
+                <TableCell className="py-4 font-medium text-base text-foreground">
+                  {ingredient.proteinPer100g.toString()}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                 </TableCell>
-                <TableCell className="py-4">
-                  <span className="inline-flex items-center px-4 py-2 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 font-semibold text-base">
-                    {ingredient.carbsPer100g.toString()}{tMeals("grams")}
-                  </span>
+                <TableCell className="py-4 font-medium text-base text-foreground">
+                  {ingredient.carbsPer100g.toString()}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                 </TableCell>
-                <TableCell className="py-4">
-                  <span className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-base">
-                    {ingredient.fatPer100g.toString()}{tMeals("grams")}
-                  </span>
+                <TableCell className="py-4 font-medium text-base text-foreground">
+                  {ingredient.fatPer100g.toString()}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                 </TableCell>
-                <TableCell className="py-4">
-                  <span className="inline-flex items-center px-4 py-2 rounded-lg bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 font-semibold text-base">
-                    {Number(ingredient.fiberPer100g || 0).toString()}{tMeals("grams")}
-                  </span>
+                <TableCell className="py-4 font-medium text-base text-muted-foreground">
+                  {Number(ingredient.fiberPer100g || 0).toString()}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                 </TableCell>
                 <TableCell className="py-4">
                   <span className="text-base font-medium text-muted-foreground">{ingredient.category}</span>

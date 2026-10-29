@@ -21,6 +21,8 @@ interface MetricConfig {
   key: "caloriesPct" | "proteinPct" | "fiberPct" | "carbsPct" | "fatPct";
   rawKey: "calories" | "protein" | "fiber" | "carbs" | "fat";
   color: string;
+  dash?: string;
+  strokeWidth: number;
   goalKey: "calories" | "protein" | "fiber" | "carbs" | "fat";
 }
 
@@ -28,32 +30,40 @@ const METRICS: MetricConfig[] = [
   {
     key: "caloriesPct",
     rawKey: "calories",
-    color: "#f97316", // orange-500
+    color: "var(--accent)",
+    strokeWidth: 2.5,
     goalKey: "calories",
   },
   {
     key: "proteinPct",
     rawKey: "protein",
-    color: "#8b5cf6", // purple-500
+    color: "var(--ink-primary)",
+    strokeWidth: 2,
     goalKey: "protein",
-  },
-  {
-    key: "fiberPct",
-    rawKey: "fiber",
-    color: "#10b981", // emerald-500
-    goalKey: "fiber",
   },
   {
     key: "carbsPct",
     rawKey: "carbs",
-    color: "#3b82f6", // blue-500
+    color: "var(--ink-secondary)",
+    dash: "4 4",
+    strokeWidth: 1.75,
     goalKey: "carbs",
   },
   {
     key: "fatPct",
     rawKey: "fat",
-    color: "#ec4899", // pink-500
+    color: "var(--ink-tertiary)",
+    dash: "2 2",
+    strokeWidth: 1.75,
     goalKey: "fat",
+  },
+  {
+    key: "fiberPct",
+    rawKey: "fiber",
+    color: "var(--border-active)",
+    dash: "6 3",
+    strokeWidth: 1.5,
+    goalKey: "fiber",
   },
 ];
 
@@ -105,11 +115,10 @@ export function NutritionGoalChart({
 
   const selectedDisplayDate = format(selectedDate, "dd.MM");
 
-  // Selected checkboxes: default calories, protein, fiber
+  // Selected metrics: default to Hero metrics (calories & protein)
   const [activeMetrics, setActiveMetrics] = useState<string[]>([
     "caloriesPct",
     "proteinPct",
-    "fiberPct",
   ]);
 
   useEffect(() => {
@@ -179,12 +188,12 @@ export function NutritionGoalChart({
               </CardTitle>
             </div>
             <div className="flex flex-wrap items-center gap-2.5 mt-1">
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                <span className="w-2.5 h-0.5 bg-emerald-500 inline-block" />
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-status-deficit">
+                <span className="w-2.5 h-0.5 bg-status-deficit inline-block" />
                 {t("chartTargetLabel", { calories: goals.calories })}
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                <span className="w-2.5 h-0.5 bg-amber-500 inline-block" />
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                <span className="w-2.5 h-0.5 bg-muted-foreground inline-block" />
                 {t("chartMaintenanceLabel", {
                   maintenance: goals.maintenanceCalories,
                   percent: goals.maintenancePct,
@@ -193,7 +202,7 @@ export function NutritionGoalChart({
             </div>
           </div>
 
-          {/* Metric Checkboxes */}
+          {/* Metric Filter Pills */}
           <div className="flex flex-wrap items-center gap-1.5">
             {METRICS.map((metric) => {
               const isChecked = activeMetrics.includes(metric.key);
@@ -204,14 +213,14 @@ export function NutritionGoalChart({
                   onClick={() => toggleMetric(metric.key)}
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium transition-all border ${
                     isChecked
-                      ? "bg-card shadow-sm border-foreground/20 text-foreground"
-                      : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted/60"
+                      ? "bg-card shadow-xs border-foreground/30 text-foreground"
+                      : "bg-muted/20 border-border/40 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   }`}>
                   <span
                     className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors ${
                       isChecked
-                        ? "text-white"
-                        : "border-muted-foreground/40 bg-transparent"
+                        ? "text-primary-foreground"
+                        : "border-muted-foreground/30 bg-transparent"
                     }`}
                     style={{
                       backgroundColor: isChecked ? metric.color : "transparent",
@@ -220,6 +229,11 @@ export function NutritionGoalChart({
                     {isChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                   </span>
                   <span>{getMetricLabel(metric.key)}</span>
+                  {metric.dash && (
+                    <span className="text-[10px] text-muted-foreground/80 font-mono tracking-tighter">
+                      {metric.dash === "4 4" ? "---" : metric.dash === "2 2" ? "···" : "-·-"}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -284,7 +298,7 @@ export function NutritionGoalChart({
                 {/* 1. Target Reference Line (100%) */}
                 <ReferenceLine
                   y={100}
-                  stroke="#10b981"
+                  stroke="var(--accent)"
                   strokeDasharray="4 4"
                   strokeWidth={1.5}
                   label={{
@@ -293,7 +307,7 @@ export function NutritionGoalChart({
                         ? t("chartTargetAndMaint", { calories: goals.calories })
                         : t("chartTargetOnly", { calories: goals.calories }),
                     position: "insideTopRight",
-                    fill: "#10b981",
+                    fill: "var(--accent)",
                     fontSize: 10,
                     fontWeight: 600,
                   }}
@@ -304,7 +318,7 @@ export function NutritionGoalChart({
                   Math.abs(goals.maintenancePct - 100) > 1 && (
                     <ReferenceLine
                       y={goals.maintenancePct}
-                      stroke="#f59e0b"
+                      stroke="var(--warning)"
                       strokeDasharray="3 3"
                       strokeWidth={1.5}
                       label={{
@@ -313,7 +327,7 @@ export function NutritionGoalChart({
                           percent: goals.maintenancePct,
                         }),
                         position: "insideTopRight",
-                        fill: "#f59e0b",
+                        fill: "var(--warning)",
                         fontSize: 10,
                         fontWeight: 600,
                       }}
@@ -376,7 +390,7 @@ export function NutritionGoalChart({
                           <div className="pt-1.5 mt-1 border-t border-border/50 text-[11px] space-y-1">
                             <div className="flex justify-between items-center text-muted-foreground">
                               <span>{t("chartToMaintenance", { maintenance: goals.maintenanceCalories })}</span>
-                              <span className={goals.maintenanceCalories - data.calories >= 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-rose-500 font-semibold"}>
+                              <span className={goals.maintenanceCalories - data.calories >= 0 ? "text-status-deficit font-semibold" : "text-status-surplus font-semibold"}>
                                 {goals.maintenanceCalories - data.calories >= 0 ? "+" : ""}
                                 {(goals.maintenanceCalories - data.calories).toFixed(1)} {tMeals("kcal")}
                               </span>
@@ -408,18 +422,21 @@ export function NutritionGoalChart({
                       dataKey={metric.key}
                       name={getMetricLabel(metric.key)}
                       stroke={metric.color}
-                      strokeWidth={2.5}
+                      strokeWidth={metric.strokeWidth}
+                      strokeDasharray={metric.dash}
                       dot={{
-                        r: 4,
-                        strokeWidth: 2,
-                        fill: "#fff",
-                        stroke: metric.color,
+                        r: metric.key === "caloriesPct" ? 4.5 : 3.5,
+                        fill: metric.color,
+                        stroke: "var(--bg-light)",
+                        strokeWidth: 1.5,
+                        strokeDasharray: "none",
                       }}
                       activeDot={{
-                        r: 6,
-                        strokeWidth: 2,
+                        r: 7,
                         fill: metric.color,
-                        stroke: "#fff",
+                        stroke: "var(--bg-light)",
+                        strokeWidth: 2,
+                        strokeDasharray: "none",
                       }}
                     />
                   );

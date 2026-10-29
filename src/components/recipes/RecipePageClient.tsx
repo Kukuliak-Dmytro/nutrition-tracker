@@ -234,13 +234,13 @@ export default function RecipePageClient({ recipeId }: RecipePageClientProps) {
                      {t("totalWholeDish", { weight: cookedWeight })}
                   </div>
                   <div className="flex items-center flex-wrap gap-4 text-sm font-medium">
-                     <span className="text-orange-600 font-bold">
+                     <span className="text-foreground font-bold">
                         {totalNutrition.calories} {tMeals("kcal")}
                      </span>
                      <span>{t("protein")}: {totalNutrition.protein}{tMeals("grams")}</span>
                      <span>{t("fat")}: {totalNutrition.fat}{tMeals("grams")}</span>
                      <span>{t("carbs")}: {totalNutrition.carbs}{tMeals("grams")}</span>
-                     <span className="text-purple-600 font-semibold">
+                     <span>
                         {t("fiber")}: {totalNutrition.fiber}{tMeals("grams")}
                      </span>
                   </div>

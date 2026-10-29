@@ -8,7 +8,7 @@
     "quickGoals": "{calories} ккал (підтр. {maintenance})"
   },
   "dashboard": {
-    "welcome": "Ласкаво просимо до NutriTrack! 👋",
+    "welcome": "Ласкаво просимо до dvkTrack! 👋",
     "readyToCook": "Готові приготувати щось смачне?",
     "todayMeals": "Сьогоднішні страви",
     "totalRecipes": "Всього рецептів",
@@ -42,6 +42,7 @@
     "today": "Сьогодні",
     "currentDishesBtn": "Поточні страви (Recent)",
     "dailyProgress": "Денний прогрес",
+    "dailyGoal": "Денна ціль",
     "setupGoals": "Налаштувати цілі",
     "goalWeightLoss": "📉 Схуднення",
     "goalMuscleGain": "📈 Набір маси",
@@ -457,13 +458,13 @@
     "system": "Системна"
   },
   "meta": {
-    "title": "NutriTrack - Трекер харчування",
-    "description": "Відстежуйте свої рецепти, інгредієнти та харчування з NutriTrack"
+    "title": "dvkTrack - Трекер харчування",
+    "description": "Відстежуйте свої рецепти, інгредієнти та харчування з dvkTrack"
   },
   "auth": {
     "signIn": "Вхід",
     "signUp": "Реєстрація",
-    "loginTitle": "Вхід до NutriTrack",
+    "loginTitle": "Вхід до dvkTrack",
     "registerTitle": "Створити акаунт",
     "subtitle": "Увійдіть або зареєструйтесь, щоб вести щоденник харчування та зберігати свої страви",
     "email": "Електронна пошта",

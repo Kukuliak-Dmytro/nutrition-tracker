@@ -128,7 +128,7 @@ export function DailyFoodDiary({
         <MealSection
           mealType="BREAKFAST"
           title={tMeals("breakfast")}
-          icon={<Coffee className="w-5 h-5 text-amber-600" />}
+          icon={<Coffee className="w-5 h-5" />}
           date={dateStr}
           entries={breakfastEntries}
         />
@@ -137,7 +137,7 @@ export function DailyFoodDiary({
         <MealSection
           mealType="SNACK_1"
           title={tMeals("snack1")}
-          icon={<Apple className="w-5 h-5 text-emerald-600" />}
+          icon={<Apple className="w-5 h-5" />}
           date={dateStr}
           entries={snack1Entries}
         />
@@ -146,7 +146,7 @@ export function DailyFoodDiary({
         <MealSection
           mealType="LUNCH"
           title={tMeals("lunch")}
-          icon={<Sun className="w-5 h-5 text-orange-600" />}
+          icon={<Sun className="w-5 h-5" />}
           date={dateStr}
           entries={lunchEntries}
         />
@@ -155,7 +155,7 @@ export function DailyFoodDiary({
         <MealSection
           mealType="SNACK_2"
           title={tMeals("snack2")}
-          icon={<Cookie className="w-5 h-5 text-purple-600" />}
+          icon={<Cookie className="w-5 h-5" />}
           date={dateStr}
           entries={snack2Entries}
         />
@@ -164,7 +164,7 @@ export function DailyFoodDiary({
         <MealSection
           mealType="DINNER"
           title={tMeals("dinner")}
-          icon={<Moon className="w-5 h-5 text-indigo-600" />}
+          icon={<Moon className="w-5 h-5" />}
           date={dateStr}
           entries={dinnerEntries}
         />

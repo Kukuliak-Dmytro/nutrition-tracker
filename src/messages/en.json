@@ -8,7 +8,7 @@
     "quickGoals": "{calories} kcal (maint. {maintenance})"
   },
   "dashboard": {
-    "welcome": "Welcome to NutriTrack! 👋",
+    "welcome": "Welcome to dvkTrack! 👋",
     "readyToCook": "Ready to cook something delicious?",
     "todayMeals": "Today's Meals",
     "totalRecipes": "Total Recipes",
@@ -42,6 +42,7 @@
     "today": "Today",
     "currentDishesBtn": "Current dishes (Recent)",
     "dailyProgress": "Daily Progress",
+    "dailyGoal": "Daily Target",
     "setupGoals": "Configure Goals",
     "goalWeightLoss": "📉 Weight Loss",
     "goalMuscleGain": "📈 Muscle Gain",
@@ -457,13 +458,13 @@
     "system": "System"
   },
   "meta": {
-    "title": "NutriTrack - Nutrition Tracker",
-    "description": "Track your recipes, ingredients, and daily nutrition with NutriTrack"
+    "title": "dvkTrack - Nutrition Tracker",
+    "description": "Track your recipes, ingredients, and daily nutrition with dvkTrack"
   },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",
-    "loginTitle": "Sign in to NutriTrack",
+    "loginTitle": "Sign in to dvkTrack",
     "registerTitle": "Create an Account",
     "subtitle": "Sign in or register to track meals and save your dishes",
     "email": "Email",

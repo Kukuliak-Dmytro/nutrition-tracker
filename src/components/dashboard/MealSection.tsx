@@ -45,7 +45,7 @@ export function MealSection({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-muted text-primary">{icon}</div>
+          <div className="p-2 rounded-xl bg-muted text-muted-foreground">{icon}</div>
           <div>
             <h3 className="font-bold text-base text-foreground">{title}</h3>
             <p className="text-xs text-muted-foreground">
@@ -59,15 +59,14 @@ export function MealSection({
         <div className="flex items-center gap-2">
           {entries.length > 0 && (
             <div className="text-right hidden sm:block">
-              <span className="font-bold text-orange-600 text-sm">
-                {subtotal.calories} {tMeals("kcal")}
+              <span className="font-bold text-foreground text-sm">
+                {subtotal.calories} <span className="text-xs font-normal text-muted-foreground">{tMeals("kcal")}</span>
               </span>
               <div className="text-[11px] text-muted-foreground">
-                {tMeals("proteinAbbr")}: {subtotal.protein}
-                {tMeals("grams")} &bull; {tMeals("fatAbbr")}: {subtotal.fat}
-                {tMeals("grams")} &bull; {tMeals("carbsAbbr")}: {subtotal.carbs}
-                {tMeals("grams")} &bull; {tMeals("fiberAbbr")}: {subtotal.fiber}
-                {tMeals("grams")}
+                <span>{tMeals("proteinAbbr")}: <strong className="font-semibold text-foreground">{subtotal.protein}g</strong></span> &bull;{" "}
+                <span>{tMeals("fatAbbr")}: <strong className="font-semibold text-foreground">{subtotal.fat}g</strong></span> &bull;{" "}
+                <span>{tMeals("carbsAbbr")}: <strong className="font-semibold text-foreground">{subtotal.carbs}g</strong></span> &bull;{" "}
+                <span>{tMeals("fiberAbbr")}: <strong className="font-semibold text-foreground">{subtotal.fiber}g</strong></span>
               </div>
             </div>
           )}
@@ -86,15 +85,14 @@ export function MealSection({
       {/* Mobile Subtotal bar */}
       {entries.length > 0 && (
         <div className="sm:hidden flex items-center justify-between p-2 rounded-lg bg-muted/40 text-xs">
-          <span className="font-bold text-orange-600">
-            {subtotal.calories} {tMeals("kcal")}
+          <span className="font-bold text-foreground">
+            {subtotal.calories} <span className="text-xs font-normal text-muted-foreground">{tMeals("kcal")}</span>
           </span>
           <span className="text-muted-foreground">
-            {tMeals("proteinAbbr")}:{subtotal.protein}
-            {tMeals("grams")} &bull; {tMeals("fatAbbr")}:{subtotal.fat}
-            {tMeals("grams")} &bull; {tMeals("carbsAbbr")}:{subtotal.carbs}
-            {tMeals("grams")} &bull; {tMeals("fiberAbbr")}:{subtotal.fiber}
-            {tMeals("grams")}
+            <span>{tMeals("proteinAbbr")}:<strong className="font-semibold text-foreground">{subtotal.protein}g</strong></span> &bull;{" "}
+            <span>{tMeals("fatAbbr")}:<strong className="font-semibold text-foreground">{subtotal.fat}g</strong></span> &bull;{" "}
+            <span>{tMeals("carbsAbbr")}:<strong className="font-semibold text-foreground">{subtotal.carbs}g</strong></span> &bull;{" "}
+            <span>{tMeals("fiberAbbr")}:<strong className="font-semibold text-foreground">{subtotal.fiber}g</strong></span>
           </span>
         </div>
       )}
@@ -118,25 +116,21 @@ export function MealSection({
                   )}
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="font-bold text-orange-600">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">
                     {Number(item.calories).toFixed(0)} {tMeals("kcal")}
                   </span>
                   <span>
-                    {tMeals("proteinAbbr")}: {Number(item.protein).toFixed(1)}
-                    {tMeals("grams")}
+                    {tMeals("proteinAbbr")}: {Number(item.protein).toFixed(1)}{tMeals("grams")}
                   </span>
                   <span>
-                    {tMeals("fatAbbr")}: {Number(item.fat).toFixed(1)}
-                    {tMeals("grams")}
+                    {tMeals("fatAbbr")}: {Number(item.fat).toFixed(1)}{tMeals("grams")}
                   </span>
                   <span>
-                    {tMeals("carbsAbbr")}: {Number(item.carbs).toFixed(1)}
-                    {tMeals("grams")}
+                    {tMeals("carbsAbbr")}: {Number(item.carbs).toFixed(1)}{tMeals("grams")}
                   </span>
-                  <span className="text-purple-600 font-medium">
-                    {tMeals("fiberAbbr")}: {Number(item.fiber || 0).toFixed(1)}
-                    {tMeals("grams")}
+                  <span>
+                    {tMeals("fiberAbbr")}: {Number(item.fiber || 0).toFixed(1)}{tMeals("grams")}
                   </span>
                 </div>
               </div>

@@ -139,13 +139,13 @@ export function NutrientProgressCalendar({
               ringProgress = Math.min(100, Math.max(5, log.caloriesPct));
 
               if (log.status === "DEFICIT") {
-                ringColor = "#10b981"; // emerald-500
+                ringColor = "var(--accent)";
                 statusTooltip = `🟢 ${t("calendarDeficit")}: ${log.calories} ${tMeals("kcal")} (${t("statsDeficit")}: +${log.deficitVsMaintenance} ${tMeals("kcal")})`;
               } else if (log.status === "MAINTENANCE") {
-                ringColor = "#f59e0b"; // amber-500
+                ringColor = "var(--warning)";
                 statusTooltip = `🟡 ${t("calendarMaintenance")}: ${log.calories} ${tMeals("kcal")} (${log.deficitVsMaintenance >= 0 ? "+" : ""}${log.deficitVsMaintenance} ${tMeals("kcal")})`;
               } else {
-                ringColor = "#ef4444"; // rose-500
+                ringColor = "var(--destructive)";
                 statusTooltip = `🔴 ${t("calendarSurplus")}: ${log.calories} ${tMeals("kcal")}`;
               }
             }

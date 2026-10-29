@@ -259,7 +259,7 @@ export function EditFoodModal({
                   })}
                 </p>
                 <div className="flex items-baseline justify-between flex-wrap gap-2">
-                  <span className="text-xl font-bold text-orange-600">
+                  <span className="text-xl font-bold text-foreground">
                     {currentCalculated.calories} {tMeals("kcal")}
                   </span>
                   <div className="text-xs text-muted-foreground space-x-2">
@@ -319,7 +319,7 @@ export function EditFoodModal({
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="custom-calories" className="text-xs font-medium text-orange-600">
+                  <Label htmlFor="custom-calories" className="text-xs font-medium text-muted-foreground">
                     {t("calories")}
                   </Label>
                   <Input

@@ -215,33 +215,25 @@ export default function RecipesTables({
                         </TableCell>
 
                         <TableCell className="py-4 text-center">
-                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 font-semibold text-xs">
-                              {Number(per100g.calories).toFixed(1)} {tMeals("kcal")}
+                           <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-foreground font-semibold text-xs border border-border/40">
+                              {Number(per100g.calories).toFixed(0)} <span className="text-[10px] text-muted-foreground font-normal ml-0.5">{tMeals("kcal")}</span>
                            </span>
                         </TableCell>
 
-                        <TableCell className="py-4 text-center">
-                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 font-semibold text-xs">
-                              {Number(per100g.protein).toFixed(1)}{tMeals("grams")}
-                           </span>
+                        <TableCell className="py-4 text-center font-medium text-sm text-foreground">
+                           {Number(per100g.protein).toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                         </TableCell>
 
-                        <TableCell className="py-4 text-center">
-                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-semibold text-xs">
-                              {Number(per100g.fat).toFixed(1)}{tMeals("grams")}
-                           </span>
+                        <TableCell className="py-4 text-center font-medium text-sm text-foreground">
+                           {Number(per100g.fat).toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                         </TableCell>
 
-                        <TableCell className="py-4 text-center">
-                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 font-semibold text-xs">
-                              {Number(per100g.carbs).toFixed(1)}{tMeals("grams")}
-                           </span>
+                        <TableCell className="py-4 text-center font-medium text-sm text-foreground">
+                           {Number(per100g.carbs).toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                         </TableCell>
 
-                        <TableCell className="py-4 text-center">
-                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400 font-semibold text-xs">
-                              {Number(per100g.fiber).toFixed(1)}{tMeals("grams")}
-                           </span>
+                        <TableCell className="py-4 text-center font-medium text-sm text-muted-foreground">
+                           {Number(per100g.fiber).toFixed(1)}<span className="text-xs text-muted-foreground ml-0.5">{tMeals("grams")}</span>
                         </TableCell>
 
                         <TableCell className="py-4 text-right pr-4">

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import {
-  Flame,
   CalendarDays,
   Utensils,
   Apple,
@@ -12,6 +11,7 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react";
+import { DvkLogo } from "@/components/ui/dvk-logo";
 import { ModeToggle } from "./ThemeSwitcher";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Link, usePathname } from "@/i18n/routing";
@@ -66,18 +66,11 @@ export default function Header() {
           {/* 1. Brand Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 transition-transform hover:scale-[1.02] focus:outline-none">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm shadow-emerald-500/25">
-              <Flame className="h-5 w-5 fill-current" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base font-bold tracking-tight text-foreground leading-tight">
-                NutriTrack
-              </span>
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                {t("caloriesAndMacros")}
-              </span>
-            </div>
+            className="flex items-end gap-2 transition-transform hover:opacity-90 focus:outline-none">
+            <DvkLogo className="h-7 w-auto shrink-0" />
+            <span className="text-lg font-black tracking-tight text-foreground leading-none">
+              Track
+            </span>
           </Link>
 
           {/* 2. Desktop Navigation */}
@@ -262,7 +255,7 @@ export default function Header() {
                     setIsMobileMenuOpen(false);
                     setIsAuthModalOpen(true);
                   }}
-                  className="w-full h-9 gap-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white">
+                  className="w-full h-9 gap-2 rounded-xl text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground">
                   <UserIcon className="h-3.5 w-3.5" />
                   <span>{tAuth("signIn")}</span>
                 </Button>
