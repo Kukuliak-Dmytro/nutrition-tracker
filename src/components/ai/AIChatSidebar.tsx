@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isToolUIPart } from "ai";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,9 +12,12 @@ import {
   RotateCcw,
   Bot,
   User as UserIcon,
-  Zap,
   ChevronDown,
+  Mic,
+  Check,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AIToolCard } from "./AIToolCard";
 import ReactMarkdown from "react-markdown";
@@ -117,11 +120,30 @@ const markdownComponents = {
   ),
 };
 
+function formatRecordingDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const [isMultiLine, setIsMultiLine] = useState(false);
+
+  // Voice recording states & refs
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isCancelledRef = useRef<boolean>(false);
 
   const {
     messages,
@@ -161,6 +183,218 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
       })
       .catch(() => {});
   }, []);
+
+  // Auto-resize textarea according to text length
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
+      const nextHeight = Math.min(Math.max(el.scrollHeight, 38), 160);
+      el.style.height = `${nextHeight}px`;
+      el.scrollTop = el.scrollHeight;
+      setIsMultiLine(nextHeight > 42);
+    } else {
+      setIsMultiLine(false);
+    }
+  }, [input]);
+
+  // Mobile detection for Enter key behavior
+  const isMobileDevice = () => {
+    if (typeof window === "undefined") return false;
+    return (
+      window.matchMedia("(max-width: 768px)").matches ||
+      window.matchMedia("(pointer: coarse)").matches ||
+      /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    );
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      // Shift+Enter, Alt+Enter, Ctrl+Enter: insert a newline and expand height
+      if (e.shiftKey || e.altKey || e.ctrlKey) {
+        return;
+      }
+
+      // On mobile devices, Enter inserts a new line (don't submit)
+      if (isMobileDevice()) {
+        return;
+      }
+
+      // On desktop, plain Enter submits
+      e.preventDefault();
+      handleSend(input);
+    }
+  };
+
+  // Voice recording helpers
+  const cleanupMediaRecording = useCallback(() => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    mediaRecorderRef.current = null;
+    setRecordingDuration(0);
+  }, []);
+
+  const cancelRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      isCancelledRef.current = true;
+      mediaRecorderRef.current.stop();
+    } else {
+      cleanupMediaRecording();
+      setIsRecording(false);
+    }
+  }, [cleanupMediaRecording]);
+
+  const startRecording = async () => {
+    if (isGenerating || isTranscribing) return;
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      toast.error("Ваш браузер не підтримує запис аудіо");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      audioChunksRef.current = [];
+      isCancelledRef.current = false;
+
+      let mimeType = "";
+      if (typeof MediaRecorder !== "undefined") {
+        const candidates = [
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/mp4",
+          "audio/ogg;codecs=opus",
+        ];
+        for (const candidate of candidates) {
+          if (MediaRecorder.isTypeSupported(candidate)) {
+            mimeType = candidate;
+            break;
+          }
+        }
+      }
+
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const wasCancelled = isCancelledRef.current;
+        const chunks = [...audioChunksRef.current];
+        cleanupMediaRecording();
+        setIsRecording(false);
+
+        if (wasCancelled || chunks.length === 0) {
+          return;
+        }
+
+        const audioBlob = new Blob(chunks, {
+          type: recorder.mimeType || "audio/webm",
+        });
+
+        if (audioBlob.size < 100) {
+          toast.info("Запис занадто короткий. Спробуйте ще раз.");
+          return;
+        }
+
+        await processVoiceRecording(audioBlob);
+      };
+
+      recorder.start(250);
+      setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+    } catch (err: unknown) {
+      cleanupMediaRecording();
+      setIsRecording(false);
+      const errorName = err instanceof Error ? err.name : "";
+      if (errorName === "NotAllowedError" || errorName === "PermissionDeniedError") {
+        toast.error("Доступ до мікрофона відхилено в налаштуваннях браузера");
+      } else {
+        toast.error("Не вдалося увімкнути мікрофон");
+      }
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      isCancelledRef.current = false;
+      try {
+        if (mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.requestData();
+        }
+      } catch {
+        // Continue if requestData is not supported
+      }
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const processVoiceRecording = async (blob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      const ext = blob.type.includes("mp4") ? "mp4" : blob.type.includes("ogg") ? "ogg" : "webm";
+      formData.append("audio", blob, `voice.${ext}`);
+
+      const res = await fetch("/api/ai/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Не вдалося розпізнати аудіо");
+      }
+
+      const data = await res.json();
+      const recognizedText = data.text?.trim();
+
+      if (recognizedText) {
+        setInput((prev) => {
+          const separator = prev && !prev.endsWith(" ") ? " " : "";
+          return `${prev}${separator}${recognizedText}`;
+        });
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 50);
+      } else {
+        toast.info("Голос не розпізнано. Спробуйте сказати чіткіше.");
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Помилка обробки голосу";
+      toast.error(message);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  // Cleanup on unmount or sidebar close
+  useEffect(() => {
+    if (!isOpen && isRecording) {
+      cancelRecording();
+    }
+  }, [isOpen, isRecording, cancelRecording]);
+
+  useEffect(() => {
+    return () => {
+      cleanupMediaRecording();
+    };
+  }, [cleanupMediaRecording]);
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -428,50 +662,88 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
               handleSend(input);
             }}
             className="flex flex-col gap-2">
-            <div className="relative flex items-center">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend(input);
-                  }
-                }}
-                rows={1}
-                placeholder="«З'їв на обід 200г гречки та 150г філе...»"
-                className="w-full resize-none rounded-xl border border-input bg-background/80 py-2.5 pl-3.5 pr-12 text-xs shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring placeholder:text-muted-foreground/70"
-              />
-
-              <div className="absolute right-1.5">
-                {isGenerating ? (
-                  <Button
+            {isRecording ? (
+              <div className="flex w-full items-center justify-between rounded-xl border border-red-500/40 bg-red-500/10 py-1.5 pl-2.5 pr-1.5 text-xs shadow-xs min-h-[42px] animate-in fade-in duration-200">
+                <div className="flex items-center gap-2">
+                  <button
                     type="button"
-                    size="icon"
-                    variant="destructive"
-                    onClick={stop}
-                    className="h-8 w-8 rounded-lg shadow-xs"
-                    title="Зупинити генерацію">
-                    <Square className="h-3 w-3 fill-current" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    size="icon"
-                    disabled={!input.trim()}
-                    className="h-8 w-8 rounded-lg shadow-xs bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40">
-                    <Send className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
+                    onClick={cancelRecording}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    title="Скасувати запис">
+                    <X className="h-4 w-4" />
+                  </button>
+                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium text-xs">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                    </span>
+                    <span>Запис голосу...</span>
+                    <span className="font-mono text-xs opacity-80">{formatRecordingDuration(recordingDuration)}</span>
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-between px-1 text-[10px] text-muted-foreground">
-              <span>Enter — відправити, Shift+Enter — новий рядок</span>
-              <span className="flex items-center gap-1 text-primary">
-                <Zap className="h-3 w-3" /> Zero-Roundtrip Tooling
-              </span>
-            </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={stopRecording}
+                  className="h-8 w-8 rounded-lg shadow-xs bg-red-600 text-white hover:bg-red-700 animate-pulse"
+                  title="Завершити та розпізнати">
+                  <Check className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : isTranscribing ? (
+              <div className="flex w-full items-center gap-2.5 rounded-xl border border-primary/30 bg-primary/5 py-2 pl-3.5 pr-3 text-xs shadow-xs min-h-[42px] animate-in fade-in duration-200">
+                <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                <span className="text-xs text-muted-foreground font-medium">Розпізнаємо голос через Gemini...</span>
+              </div>
+            ) : (
+              <div className="relative flex items-center w-full">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  rows={1}
+                  placeholder="«З'їв на обід 200г гречки та 150г філе...»"
+                  className="w-full resize-none rounded-xl border border-input bg-background/80 py-2.5 pl-3.5 pr-12 text-xs shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring placeholder:text-muted-foreground/70 max-h-40 overflow-y-auto leading-relaxed no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                />
+
+                <div
+                  className={`absolute right-1.5 ${
+                    isMultiLine ? "bottom-1.5" : "top-1/2 -translate-y-1/2"
+                  }`}>
+                  {isGenerating ? (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="destructive"
+                      onClick={stop}
+                      className="h-8 w-8 rounded-lg shadow-xs"
+                      title="Зупинити генерацію">
+                      <Square className="h-3 w-3 fill-current" />
+                    </Button>
+                  ) : input.trim().length > 0 ? (
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="h-8 w-8 rounded-lg shadow-xs bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200"
+                      title="Надіслати">
+                      <Send className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={startRecording}
+                      className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all duration-200"
+                      title="Голосовий ввід">
+                      <Mic className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
         </footer>
       </aside>

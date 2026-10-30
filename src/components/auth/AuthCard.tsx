@@ -168,7 +168,7 @@ export function AuthCard({ initialMode = "login", onSuccess }: AuthCardProps) {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-10 rounded-xl font-semibold mt-2 shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white">
+            className="w-full h-10 rounded-xl font-semibold mt-2 shadow-xs bg-primary hover:bg-primary/90 text-primary-foreground">
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />

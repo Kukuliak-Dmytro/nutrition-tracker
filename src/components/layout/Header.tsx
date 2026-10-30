@@ -158,7 +158,7 @@ export default function Header() {
                 variant="default"
                 size="sm"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="h-9 gap-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
+                className="h-9 gap-1.5 rounded-xl text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs">
                 <UserIcon className="h-3.5 w-3.5" />
                 <span>{tAuth("signIn")}</span>
               </Button>
