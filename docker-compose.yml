@@ -60,6 +60,12 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-nutrition-agent:3b}
       GOOGLE_GENERATIVE_AI_API_KEY: ${GOOGLE_GENERATIVE_AI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-deadnet_admin}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-deadnet_secret_key}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-nutrition-tracker}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-http://localhost:9000/nutrition-tracker}
     env_file:
       - path: .env
         required: false
@@ -69,6 +75,26 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  minio:
+    image: minio/minio:latest
+    container_name: nutrition_tracker_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-deadnet_admin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-deadnet_secret_key}
+    volumes:
+      - nutrition_minio_data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   nutrition_postgres_data:
   nutrition_ollama_data:
+  nutrition_minio_data:

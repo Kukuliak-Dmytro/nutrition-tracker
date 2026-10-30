@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages, sessionId, currentDate } = body;
+    const { messages, sessionId, currentDate, imageDataUrl, imageUrl } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: "Messages array is required" }), {
@@ -72,12 +72,18 @@ export async function POST(req: NextRequest) {
     // 2. Persist latest incoming user message
     const latestUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
     const latestUserText = extractText(latestUserMessage);
-    if (latestUserText) {
+    const activeImageUrl =
+      (typeof imageUrl === "string" && imageUrl.trim()) ||
+      (latestUserMessage as Record<string, unknown> | undefined)?.imageUrl ||
+      null;
+
+    if (latestUserText || activeImageUrl) {
       await prisma.chatMessage.create({
         data: {
           sessionId: currentSessionId,
           role: "user",
-          content: latestUserText,
+          content: latestUserText || "Аналіз фотографії страви",
+          imageUrl: typeof activeImageUrl === "string" ? activeImageUrl : null,
         },
       });
     }
@@ -86,15 +92,39 @@ export async function POST(req: NextRequest) {
     aiLogger.logInput({
       sessionId: currentSessionId,
       userId,
-      userMessage: latestUserText,
+      userMessage: latestUserText || (activeImageUrl ? "[Зображення]" : ""),
       totalMessages: messages.length,
     });
 
     // 3. Setup agent tools and system prompt
-    const rawTools = getAgentTools(userId);
-    const systemPrompt = buildSystemPrompt({ currentDate });
+    const rawTools = getAgentTools(userId, {
+      defaultImageUrl: typeof activeImageUrl === "string" ? activeImageUrl : null,
+    });
+    const systemPrompt = buildSystemPrompt({
+      currentDate,
+      hasAttachedImage: Boolean(activeImageUrl || imageDataUrl),
+    });
     const model = getLLMModel();
     const modelMessages = await convertToModelMessages(messages);
+
+    // If an image was attached in this turn, inject it into the latest user modelMessage
+    if (typeof imageDataUrl === "string" && imageDataUrl.startsWith("data:image/")) {
+      const lastUserIndex = modelMessages.findLastIndex((m) => m.role === "user");
+      if (lastUserIndex !== -1 && modelMessages[lastUserIndex].role === "user") {
+        const userMsg = modelMessages[lastUserIndex];
+        const existingContent = Array.isArray(userMsg.content)
+          ? userMsg.content
+          : [{ type: "text" as const, text: String(userMsg.content || "") }];
+
+        (userMsg as { content: unknown }).content = [
+          ...existingContent,
+          {
+            type: "image",
+            image: imageDataUrl,
+          },
+        ];
+      }
+    }
 
     // Track all tool executions to prevent calling the exact same tool with identical parameters
     const executedToolKeys = new Set<string>();

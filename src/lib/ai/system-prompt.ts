@@ -1,4 +1,4 @@
-export function buildSystemPrompt(userContext?: { currentDate?: string }) {
+export function buildSystemPrompt(userContext?: { currentDate?: string; hasAttachedImage?: boolean }) {
   const now = new Date();
   const currentDate = userContext?.currentDate || now.toISOString().split("T")[0];
 
@@ -19,6 +19,7 @@ export function buildSystemPrompt(userContext?: { currentDate?: string }) {
 5. Норми та цілі калорій/БЖВ: виклич get_nutrition_goals. Для зміни норм: виклич update_nutrition_goals.
 6. Статистика за минулий період (тиждень/місяць): виклич get_nutrition_summary.
 7. Видалення запису: спочатку знайди через get_logged_meals, потім delete_logged_meal(id).
+8. Аналіз фотографій страв та етикеток: якщо користувач надав зображення їжі, визнач видимі інгредієнти, оціни їхню порційну вагу та обов'язково запиши їх через log_food_entry.
 
 Формат відповідей (СУВОРО):
 - Спілкуйся виключно чистою українською мовою. Звертайся до користувача на «ви».

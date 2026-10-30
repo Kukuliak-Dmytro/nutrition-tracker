@@ -8,7 +8,7 @@ import {
   calculatePortionNutrition,
 } from "../../../utils/calculations/nutrition";
 
-export function getAgentTools(userId: string) {
+export function getAgentTools(userId: string, options?: { defaultImageUrl?: string | null }) {
   return {
     search_foods: tool({
       description: "Пошук продуктів та страв у базі за назвою.",
@@ -239,6 +239,7 @@ export function getAgentTools(userId: string) {
         mealType: z
           .enum(["BREAKFAST", "SNACK_1", "LUNCH", "SNACK_2", "DINNER"])
           .describe("BREAKFAST | SNACK_1 | LUNCH | SNACK_2 | DINNER"),
+        imageUrl: z.string().optional().describe("URL фотографії страви в сховищі"),
         items: z.array(
           z.object({
             name: z.string().describe("Назва"),
@@ -250,12 +251,14 @@ export function getAgentTools(userId: string) {
             fiber: z.number().optional().default(0),
             ingredientId: z.string().optional(),
             recipeId: z.string().optional(),
+            imageUrl: z.string().optional().describe("URL фотографії для окремого продукту"),
           })
         ),
       }),
       execute: async (args: {
         date: string;
         mealType: "BREAKFAST" | "SNACK_1" | "LUNCH" | "SNACK_2" | "DINNER";
+        imageUrl?: string;
         items: Array<{
           name: string;
           weightGrams: number;
@@ -266,6 +269,7 @@ export function getAgentTools(userId: string) {
           fiber?: number;
           ingredientId?: string;
           recipeId?: string;
+          imageUrl?: string;
         }>;
       }) => {
         try {
@@ -433,6 +437,7 @@ export function getAgentTools(userId: string) {
                 carbs,
                 fat,
                 fiber,
+                imageUrl: item.imageUrl || args.imageUrl || options?.defaultImageUrl || null,
                 ingredientId: matchedIngredientId || null,
                 recipeId: matchedRecipeId || null,
               },
