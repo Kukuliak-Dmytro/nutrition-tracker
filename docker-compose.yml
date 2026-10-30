@@ -76,7 +76,7 @@ services:
         max-file: "3"
 
   minio:
-    image: minio/minio:latest
+    image: elestio/minio:latest
     container_name: nutrition_tracker_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"

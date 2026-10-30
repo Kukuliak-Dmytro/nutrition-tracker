@@ -72,7 +72,10 @@ interface AIChatMessageProps {
 export function AIChatMessage({ message, imageUrl }: AIChatMessageProps) {
   const isUser = message.role === "user";
   const attachedImageUrl =
-    imageUrl || (message as unknown as { imageUrl?: string }).imageUrl || null;
+    (message.metadata as { imageUrl?: string } | undefined)?.imageUrl ||
+    imageUrl ||
+    (message as unknown as { imageUrl?: string }).imageUrl ||
+    null;
 
   return (
     <div className={`flex gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>

@@ -113,16 +113,11 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
 
     const messageText =
       trimmed || (uploadedUrl ? "Проаналізуй це фото страви та запиши її в щоденник." : "");
-    const currentMsgId = `user-${Date.now()}`;
-
-    if (uploadedUrl) {
-      setMessageImages((prev) => ({ ...prev, [currentMsgId]: uploadedUrl! }));
-    }
 
     await sendMessage(
       {
         text: messageText,
-        messageId: currentMsgId,
+        metadata: uploadedUrl ? { imageUrl: uploadedUrl } : undefined,
       },
       {
         body: {

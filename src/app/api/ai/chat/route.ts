@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
           ...existingContent,
           {
             type: "image",
-            image: imageDataUrl,
+            image: new URL(imageDataUrl),
           },
         ];
       }
