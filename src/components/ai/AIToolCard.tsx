@@ -10,6 +10,7 @@ interface LoggedEntry {
   protein: number;
   fat: number;
   carbs: number;
+  fiber?: number;
 }
 
 interface LoggedResult {
@@ -19,6 +20,14 @@ interface LoggedResult {
     protein: number;
     fat: number;
     carbs: number;
+    fiber?: number;
+  };
+  dayTotals?: {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    fiber: number;
   };
   totalDaysLogged?: number;
   dailyAverages?: {
@@ -73,7 +82,7 @@ export function AIToolCard({ tool }: { tool: ToolInvocation }) {
               <div key={idx} className="flex justify-between items-center text-foreground">
                 <span className="font-medium">• {item.name} ({item.weightGrams}г)</span>
                 <span className="text-xs text-muted-foreground">
-                  {item.calories} ккал | Б: {item.protein}г | Ж: {item.fat}г | В: {item.carbs}г
+                  {item.calories} ккал | Б: {item.protein}г | Ж: {item.fat}г | В: {item.carbs}г{typeof item.fiber === "number" ? ` | К: ${item.fiber}г` : ""}
                 </span>
               </div>
             ))}
@@ -81,7 +90,15 @@ export function AIToolCard({ tool }: { tool: ToolInvocation }) {
               <div className="pt-2 border-t border-border/50 flex justify-between font-semibold text-foreground">
                 <span>Разом за запис:</span>
                 <span className="text-emerald-600 dark:text-emerald-400">
-                  {res.totals.calories} ккал (Б: {res.totals.protein}г | Ж: {res.totals.fat}г | В: {res.totals.carbs}г)
+                  {res.totals.calories} ккал (Б: {res.totals.protein}г | Ж: {res.totals.fat}г | В: {res.totals.carbs}г{typeof res.totals.fiber === "number" ? ` | К: ${res.totals.fiber}г` : ""})
+                </span>
+              </div>
+            )}
+            {res.dayTotals && (
+              <div className="pt-1.5 flex justify-between text-[11px] text-muted-foreground border-t border-border/30">
+                <span>Всього за день:</span>
+                <span className="font-medium text-foreground">
+                  {res.dayTotals.calories} ккал (Б: {res.dayTotals.protein}г | Ж: {res.dayTotals.fat}г | В: {res.dayTotals.carbs}г | К: {res.dayTotals.fiber}г)
                 </span>
               </div>
             )}

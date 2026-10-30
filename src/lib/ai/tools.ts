@@ -466,6 +466,25 @@ export function getAgentTools(userId: string, options?: { defaultImageUrl?: stri
             { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
           );
 
+          // Calculate day totals across all meals for this date
+          const allDayEntries = await prisma.foodLogEntry.findMany({
+            where: {
+              userId,
+              date: entryDate,
+            },
+          });
+
+          const dayTotals = allDayEntries.reduce(
+            (acc, curr) => ({
+              calories: Math.round((acc.calories + Number(curr.calories)) * 10) / 10,
+              protein: Math.round((acc.protein + Number(curr.protein)) * 10) / 10,
+              carbs: Math.round((acc.carbs + Number(curr.carbs)) * 10) / 10,
+              fat: Math.round((acc.fat + Number(curr.fat)) * 10) / 10,
+              fiber: Math.round((acc.fiber + Number(curr.fiber)) * 10) / 10,
+            }),
+            { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+          );
+
           return {
             success: true,
             mealType: args.mealType,
@@ -473,6 +492,7 @@ export function getAgentTools(userId: string, options?: { defaultImageUrl?: stri
             entriesCount: createdEntries.length,
             entries: createdEntries,
             totals,
+            dayTotals,
           };
         } catch (error) {
           console.error("log_food_entry tool error:", error);
@@ -526,6 +546,7 @@ export function getAgentTools(userId: string, options?: { defaultImageUrl?: stri
               protein: Number(e.protein),
               carbs: Number(e.carbs),
               fat: Number(e.fat),
+              fiber: Number(e.fiber),
             })),
             totals,
           };
