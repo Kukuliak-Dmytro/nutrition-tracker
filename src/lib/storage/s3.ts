@@ -58,8 +58,9 @@ export async function uploadImageToStorage(
 
   await s3Client.send(command);
 
-  const publicBase = process.env.S3_PUBLIC_URL || `${endpoint.replace(/\/$/, "")}/${S3_BUCKET}`;
-  const url = `${publicBase.replace(/\/$/, "")}/${key}`;
+  const url = process.env.S3_PUBLIC_URL
+    ? `${process.env.S3_PUBLIC_URL.replace(/\/$/, "")}/${key}`
+    : `/api/storage/file?key=${encodeURIComponent(key)}`;
 
   return { url, key };
 }
